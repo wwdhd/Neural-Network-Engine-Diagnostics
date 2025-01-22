@@ -45,10 +45,10 @@ x2 = combinedfiltered(:, 1:13); %x2 only filled with failed cases
 % Call the neural network function to execute isolation
 y_iso = round(Isolation1440x4v1(x2));
 
-% Replace 2 and 3 (positive and negative) with ±1, 
-% because anything above 1 is considered failed
+% Replace 2 and 3 (positive and negative) with 0, 
+% because anything above 0 is considered affected by the part that has
+% value of 1
 
-% Replace 2 and 3 (positive and negative) with 0
 y_iso(abs(y_iso) == 2 | abs(y_iso) == 3) = 0;
 
 % Display the modified matrix
@@ -58,7 +58,18 @@ disp(abs(y_iso));
 combinedmat2 = [x2, abs(y_iso)];
 
 % Divide the combined matrix into 4 subsets
-LPC = combinedmat2(y_iso(:, 1) == 1, :); % Rows where the first column of y_iso is 1
-HPC = combinedmat2(y_iso(:, 2) == 1, :); % Rows where the second column of y_iso is 1
-HPT = combinedmat2(y_iso(:, 3) == 1, :); % Rows where the third column of y_iso is 1
-LPT = combinedmat2(y_iso(:, 4) == 1, :); % Rows where the fourth column of y_iso is 1
+iso_lpc = combinedmat2(y_iso(:, 1) == 1, :); % Rows where the LPC column of y_iso is 1
+iso_hpc = combinedmat2(y_iso(:, 2) == 1, :); % Rows where the HPC column of y_iso is 1
+iso_hpt = combinedmat2(y_iso(:, 3) == 1, :); % Rows where the HPT column of y_iso is 1
+iso_lpt = combinedmat2(y_iso(:, 4) == 1, :); % Rows where the LPT column of y_iso is 1
+
+%% Quantification, LPC
+
+% Take the result of the isolation out
+x3_lpc = iso_lpc(:, 1:13);
+
+y_qua = Quantification1IPC1440x1v1(x3_lpc);
+
+disp("Quantification Result (LPC)")
+disp(y_qua)
+
