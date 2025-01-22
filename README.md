@@ -10,7 +10,7 @@ In this study, the Neural Network Machine Learning is used for failure identific
 
 - [x] Make 1 part of the entire neural network
 - [ ] Make the entire part of the neural network
-  - [ ] Low Pressure Compressor (LPC)
+  - [X] Low Pressure Compressor (LPC) --> Quantification reached but no verification
   - [ ] High Pressure Compressor (HPC)
   - [ ] High Pressure Turbine (HPT)
   - [ ] Low Pressure Turbine (LPT)
