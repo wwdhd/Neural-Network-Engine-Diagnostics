@@ -15,11 +15,11 @@ disp(x1);
 
 %% DETECTION
 % Call the neural network function
-y_det = myNeuralNetworkFunctionHPT(x1);
+y_det = Detection1440x5v1(x1);
 
 % Display the output
 disp('Detection Output:');
-y_det
+round(y_det)
 
 % Combined the result of the detection with the result of the detection
 combinedmat = [x1, round(y_det)];
@@ -37,24 +37,28 @@ end
 
 %disp(combinedfiltered);
 
-%% ISOLATION, High Pressure Turbine (HPT)
+%% ISOLATION
 
 % Take the result of the detection out
 x2 = combinedfiltered(:, 1:13); %x2 only filled with failed cases
 
 % Call the neural network function to execute isolation
-y_iso = myNeuralNetworkFunctionHPTIso(x2);
+y_iso = round(Isolation1440x4v1(x2));
 
-% Display the output
-disp('Isolation Output:');
-disp(round(y_iso));
+% Replace 2 and 3 (positive and negative) with ±1, 
+% because anything above 1 is considered failed
 
-%if HOT = 1, maka ambil
+% Replace 2 and 3 (positive and negative) with 0
+y_iso(abs(y_iso) == 2 | abs(y_iso) == 3) = 0;
 
-%% QUANTIFICATION
-% Call the neural network function
-y_qua = myNeuralNetworkFunctionHPTQua(x1);
+% Display the modified matrix
+disp(abs(y_iso));
 
-% Display the output
-disp('Quantification Output:');
-disp(y_qua);
+%Combine the x2 with y_iso
+combinedmat2 = [x2, abs(y_iso)];
+
+% Divide the combined matrix into 4 subsets
+LPC = combinedmat2(y_iso(:, 1) == 1, :); % Rows where the first column of y_iso is 1
+HPC = combinedmat2(y_iso(:, 2) == 1, :); % Rows where the second column of y_iso is 1
+HPT = combinedmat2(y_iso(:, 3) == 1, :); % Rows where the third column of y_iso is 1
+LPT = combinedmat2(y_iso(:, 4) == 1, :); % Rows where the fourth column of y_iso is 1
