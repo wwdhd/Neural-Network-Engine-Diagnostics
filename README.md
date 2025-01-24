@@ -14,4 +14,4 @@ In this study, the Neural Network Machine Learning is used for failure identific
   - [X] High Pressure Compressor (HPC)
   - [X] High Pressure Turbine (HPT)
   - [X] Low Pressure Turbine (LPT)
-- [ ] Create excel post-processing
+- [X] Create excel post-processing
