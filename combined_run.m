@@ -28,18 +28,18 @@ y_det = round(y_det);
 % Ground truth values (all 1s)
 groundTruth = ones(size(y_det));
 
-% Ensure predicted and ground truth are categorical with desired labels
-y_det_categorical = categorical(y_det, [0, 1], {'0', '1'});
-groundTruth = categorical(groundTruth, [0, 1], {'0', '1'});
+% Convert predicted and ground truth to binary matrices for plotconfusion
+numClasses = 2; % Since we only have binary classes: '0' and '1'
+groundTruthBinary = full(ind2vec(groundTruth' + 1, numClasses)); % Convert ground truth to binary matrix
+y_det_binary = full(ind2vec(y_det' + 1, numClasses)); % Convert predictions to binary matrix
 
-% Visualize the confusion matrix
-confusionchart(groundTruth, y_det_categorical);
+% Plot the confusion matrix using plotconfusion
+plotconfusion(groundTruthBinary, y_det_binary);
 
 % Add title
-title('Confusion Matrix');
+title('Detection Confusion Matrix');
 xlabel('Predicted');
 ylabel('True');
-title('Confusion Matrix');
 
 % Create the folder if it doesn't exist
 if ~exist('charts', 'dir')
@@ -47,7 +47,8 @@ if ~exist('charts', 'dir')
 end
 
 % Save the confusion chart as an image file in the folder
-saveas(gcf, fullfile('charts', 'confusion_matrix.png'));
+saveas(gcf, fullfile('charts', 'plotconfusion_detection.png'));
+
 
 
 %%%%%%%%%%%%%% ISOLATION PREPARATION %%%%%%%%%%%%%%%%%%%
@@ -91,6 +92,32 @@ end
 % Display the resulting matrix
 disp('Modified Matrix:');
 disp(y_iso_mod);
+
+
+%%%% CONFUSION MATRIX %%%%%%
+
+% Desired output matrix (target)
+desired_output = repmat([0 1 0 0], size(y_iso_mod, 1), 1);
+
+% Convert rows to class labels
+[~, predicted_labels] = max(y_iso_mod, [], 2);  % Predicted labels from neural network output
+[~, true_labels] = max(desired_output, [], 2); % True labels from desired output
+
+% Convert labels to one-hot encoded matrices for plotconfusion
+numClasses = 4; % Number of classes
+true_onehot = full(ind2vec(true_labels', numClasses)); % Convert true labels to one-hot
+predicted_onehot = full(ind2vec(predicted_labels', numClasses)); % Convert predicted labels to one-hot
+
+% Plot the confusion matrix using plotconfusion
+plotconfusion(true_onehot, predicted_onehot);
+
+% Add title
+title('Isolation Confusion Matrix');
+xlabel('Predicted Class');
+ylabel('True Class');
+saveas(gcf, fullfile('charts', 'plotconfusion_isolation.png'));
+
+
 
 % Display the matrix as an image
 % figure;
