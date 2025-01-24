@@ -22,15 +22,40 @@ disp(x1);
 %% DETECTION
 % Call the neural network function
 y_det = Detection1440x5v1(x1);
+y_det = round(y_det);
 
-% Display the output
-disp('Detection Output:');
-round(y_det)
+%%%%%%%%%%%%%% CONFUSION MATRIX %%%%%%%%%%%%%%%%%%
+% Ground truth values (all 1s)
+groundTruth = ones(size(y_det));
+
+% Ensure predicted and ground truth are categorical with desired labels
+y_det_categorical = categorical(y_det, [0, 1], {'0', '1'});
+groundTruth = categorical(groundTruth, [0, 1], {'0', '1'});
+
+% Visualize the confusion matrix
+confusionchart(groundTruth, y_det_categorical);
+
+% Add title
+title('Confusion Matrix');
+xlabel('Predicted');
+ylabel('True');
+title('Confusion Matrix');
+
+% Create the folder if it doesn't exist
+if ~exist('charts', 'dir')
+   mkdir('charts');
+end
+
+% Save the confusion chart as an image file in the folder
+saveas(gcf, fullfile('charts', 'confusion_matrix.png'));
+
+
+%%%%%%%%%%%%%% ISOLATION PREPARATION %%%%%%%%%%%%%%%%%%%
+
 
 % Combined the result of the detection with the result of the detection
 numbered_column = (1:size(y_det, 1))'; %Creating the case number for the ease of analysis
 combinedmat = [numbered_column, x1, round(y_det)];
-
 
 % Create a filtered matrix, for only the failed detection cases
 % Initialize an empty array to store rows where the first element is < 5
@@ -53,16 +78,19 @@ x2 = combinedfiltered(:, 2:14); %x2 only filled with failed cases
 numbered_column2 = combinedfiltered(:, 1);
 
 % Call the neural network function to execute isolation
-y_iso = round(Isolation1440x4v1(x2));
+y_iso = abs(round(Isolation1440x4v1(x2))); %absolute and round altogether
 
-% Replace 2 and 3 (positive and negative) with 0, 
-% because anything above 0 is considered affected by the part that has
-% value of 1
+% Replace each row with a one-hot encoding of the maximum value
+[numRows, numCols] = size(y_iso);
+y_iso_mod = zeros(size(y_iso));
+for i = 1:numRows
+    [~, colIdx] = max(y_iso(i, :)); % Find index of the maximum value (leftmost in case of ties)
+    y_iso_mod(i, colIdx) = 1;          % Set that index to 1
+end
 
-y_iso(abs(y_iso) == 2 | abs(y_iso) == 3) = 0;
-
-% Display the modified matrix
-disp(abs(y_iso));
+% Display the resulting matrix
+disp('Modified Matrix:');
+disp(y_iso_mod);
 
 % Display the matrix as an image
 % figure;
@@ -72,13 +100,13 @@ disp(abs(y_iso));
 % title('Grid Representation of y\_iso');
 
 %Combine the x2 with y_iso
-combinedmat2 = [numbered_column2, x2, abs(y_iso)];
+combinedmat2 = [numbered_column2, x2, abs(y_iso_mod)];
 
 % Divide the combined matrix into 4 subsets
-iso_lpc = combinedmat2(y_iso(:, 1) == 1, :); % Rows where the LPC column of y_iso is 1
-iso_hpc = combinedmat2(y_iso(:, 2) == 1, :); % Rows where the HPC column of y_iso is 1
-iso_hpt = combinedmat2(y_iso(:, 3) == 1, :); % Rows where the HPT column of y_iso is 1
-iso_lpt = combinedmat2(y_iso(:, 4) == 1, :); % Rows where the LPT column of y_iso is 1
+iso_lpc = combinedmat2(y_iso_mod(:, 1) == 1, :); % Rows where the LPC column of y_iso is 1
+iso_hpc = combinedmat2(y_iso_mod(:, 2) == 1, :); % Rows where the HPC column of y_iso is 1
+iso_hpt = combinedmat2(y_iso_mod(:, 3) == 1, :); % Rows where the HPT column of y_iso is 1
+iso_lpt = combinedmat2(y_iso_mod(:, 4) == 1, :); % Rows where the LPT column of y_iso is 1
 
 %% Quantification, LPC
 
@@ -134,13 +162,13 @@ combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 
 %% Excel Output
 
-% Headers for each sheet (converted to cell array)
+% Headers for the sheets (converted to cell array)
 headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
 headers_B = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Detection Result'};
 headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'delta_efficiency', 'Flow Capacity'};
 
-% Assuming A is already defined as a numeric matrix
-A = [numbered_column, x1];  % Define A based on your data
+%Combining x1 with case number
+A = [numbered_column, x1]; 
 
 % Convert numeric data in A to cell array
 data_A = [headers_A; num2cell(A)];
@@ -160,7 +188,3 @@ writecell(data_C, filename, 'Sheet', 'Iso-Qua_LPC');
 writecell(data_D, filename, 'Sheet', 'Iso-Qua_HPC');
 writecell(data_E, filename, 'Sheet', 'Iso-Qua_HPT');
 writecell(data_F, filename, 'Sheet', 'Iso-Qua_LPT');
-
-
-
-
