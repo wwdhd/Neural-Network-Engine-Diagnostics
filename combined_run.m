@@ -110,7 +110,7 @@ combinedmat3_hpc = [numbered_column3_hpc, x3_hpc, y_qua_hpc];
 
 % Take the result of the isolation out
 x3_hpt = iso_hpt(:, 2:14);
-numbered_column3_hpt = iso_lpt(:,1);
+numbered_column3_hpt = iso_hpt(:,1);
 
 y_qua_hpt =Quantification3HPT1440x1v1(x3_hpt);
 
@@ -134,20 +134,33 @@ combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 
 %% Excel Output
 
-% % Headers for each sheet (converted to cell array)
-% headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
-% 
-% % Assuming A is already defined as a numeric matrix
-% A = [numbered_column, x1];  % Define A based on your data
-% 
-% % Convert numeric data in A to cell array
-% data_A = [headers_A; num2cell(A)];
-% 
-% % Define the filename
-% filename = 'testsheet.xlsx';
-% 
-% % Write data_A to the first sheet with headers
-% writecell(data_A, filename, 'Sheet', 'Input_Case');
+% Headers for each sheet (converted to cell array)
+headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
+headers_B = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Detection Result'};
+headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'delta_efficiency', 'Flow Capacity'};
+
+% Assuming A is already defined as a numeric matrix
+A = [numbered_column, x1];  % Define A based on your data
+
+% Convert numeric data in A to cell array
+data_A = [headers_A; num2cell(A)];
+data_B = [headers_B; num2cell(combinedfiltered)];
+data_C = [headers_C; num2cell(combinedmat3_lpc)];
+data_D = [headers_C; num2cell(combinedmat3_hpc)];
+data_E = [headers_C; num2cell(combinedmat3_hpt)];
+data_F = [headers_C; num2cell(combinedmat3_lpt)];
+
+% Define the filename
+filename = 'NN-Results.xlsx';
+
+% Write data_A to the first sheet with headers
+writecell(data_A, filename, 'Sheet', 'Input_Case');
+writecell(data_B, filename, 'Sheet', 'Detection');
+writecell(data_C, filename, 'Sheet', 'Iso-Qua_LPC');
+writecell(data_D, filename, 'Sheet', 'Iso-Qua_HPC');
+writecell(data_E, filename, 'Sheet', 'Iso-Qua_HPT');
+writecell(data_F, filename, 'Sheet', 'Iso-Qua_LPT');
+
 
 
 
