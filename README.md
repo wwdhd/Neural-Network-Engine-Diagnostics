@@ -3,14 +3,15 @@ In this study, the Neural Network Machine Learning is used for failure identific
 
 ## Parts name:
 * The combined_part is the executable MATLAB subroutine, use this if you want to execute the entire neural network or changing the input dataset name
-* myNeuralNetworkFunctionxxx files are the neural network parameters. Change this if you want to fine tune the result of the parameters.
-* The excel files are the input datasets. Change this for a new engine data
+* Neural-Network-Function folder is the neural network parameters folder. Change the file inside if you want to fine tune the result of the parameters.
+* The excel file, "Test HPC.xlsx" is the input datasets. Change this for a new engine data
 
 ## Checklists
 
 - [x] Make 1 part of the entire neural network
-- [ ] Make the entire part of the neural network
+- [X] Make the entire part of the neural network
   - [X] Low Pressure Compressor (LPC) --> Quantification reached but no verification
-  - [ ] High Pressure Compressor (HPC)
-  - [ ] High Pressure Turbine (HPT)
-  - [ ] Low Pressure Turbine (LPT)
+  - [X] High Pressure Compressor (HPC)
+  - [X] High Pressure Turbine (HPT)
+  - [X] Low Pressure Turbine (LPT)
+- [ ] Create excel post-processing
