@@ -6,7 +6,7 @@ clc
 currentFolder = fileparts(mfilename('fullpath'));
 
 % Construct the full path to the Excel file
-filename = fullfile(currentFolder, 'Test HPC.xlsx');
+filename = fullfile(currentFolder, 'Quantification-Test-HPC.xlsx');
 
 % Read the data from the Excel file
 x1 = readmatrix(filename);
@@ -47,7 +47,7 @@ if ~exist('charts', 'dir')
 end
 
 % Save the confusion chart as an image file in the folder
-saveas(gcf, fullfile('charts', 'plotconfusion_detection.png'));
+saveas(gcf, fullfile('charts', 'plotconfusion_detection_qua_test.png'));
 
 
 
@@ -115,7 +115,7 @@ plotconfusion(true_onehot, predicted_onehot);
 title('Isolation Confusion Matrix');
 xlabel('Predicted Class');
 ylabel('True Class');
-saveas(gcf, fullfile('charts', 'plotconfusion_isolation.png'));
+saveas(gcf, fullfile('charts', 'plotconfusion_isolation_qua_test.png'));
 
 
 
@@ -206,7 +206,7 @@ data_E = [headers_C; num2cell(combinedmat3_hpt)];
 data_F = [headers_C; num2cell(combinedmat3_lpt)];
 
 % Define the filename
-filename = 'NN-Results.xlsx';
+filename = 'NN-Results_qua-test.xlsx';
 
 % Write data_A to the first sheet with headers
 writecell(data_A, filename, 'Sheet', 'Input_Case');
