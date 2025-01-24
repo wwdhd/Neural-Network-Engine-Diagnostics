@@ -15,5 +15,6 @@ In this study, the Neural Network Machine Learning is used for failure identific
   - [X] High Pressure Turbine (HPT)
   - [X] Low Pressure Turbine (LPT)
 - [ ] Create post-processing
-  - [X] Excel post-processing (LPT)
+  - [X] Excel post-processing
   - [X] Confusion matrix for detection and isolation part
+  - [ ] Flow Prediction for quantification part
