@@ -2,24 +2,31 @@ clear all
 close all
 clc
 
+disp("RUN START!")
+
 % Get the full path to the script's folder (current directory)
 currentFolder = fileparts(mfilename('fullpath'));
 
+disp("Reading Input File...")
 % Construct the full path to the Excel file
-filename = fullfile(currentFolder, 'Quantification-Test-HPC.xlsx');
+inputdat = fullfile(currentFolder, 'Quantification-Test-HPC.xlsx');
+quainput = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
 
 % Read the data from the Excel file
-x1 = readmatrix(filename);
+x1 = readmatrix(inputdat);
+xqua = readmatrix(quainput);
+
+disp("Reading Input File Success!")
 
 % Add the function folder path
 addpath(fullfile(currentFolder, 'Neural-Network-Function'));
 
 % Display the data to validate readability
-disp('Input Data:')
-disp(x1);
-
+% disp('Input Data:')
+% disp(x1);
 
 %% DETECTION
+disp("Conducting Detection...")
 % Call the neural network function
 y_det = Detection1440x5v1(x1);
 y_det = round(y_det);
@@ -73,7 +80,7 @@ end
 %disp(combinedfiltered);
 
 %% ISOLATION
-
+disp("Conducting Isolation...")
 % Take the result of the detection out
 x2 = combinedfiltered(:, 2:14); %x2 only filled with failed cases
 numbered_column2 = combinedfiltered(:, 1);
@@ -90,8 +97,8 @@ for i = 1:numRows
 end
 
 % Display the resulting matrix
-disp('Modified Matrix:');
-disp(y_iso_mod);
+% disp('Modified Matrix:');
+% disp(y_iso_mod);
 
 
 %%%% CONFUSION MATRIX %%%%%%
@@ -136,6 +143,8 @@ iso_hpt = combinedmat2(y_iso_mod(:, 3) == 1, :); % Rows where the HPT column of 
 iso_lpt = combinedmat2(y_iso_mod(:, 4) == 1, :); % Rows where the LPT column of y_iso is 1
 
 %% Quantification, LPC
+disp("Conducting Quantification on:")
+disp("• Low Pressure Compressor (LPC)")
 
 % Take the result of the isolation out
 x3_lpc = iso_lpc(:, 2:14);
@@ -143,25 +152,61 @@ numbered_column3_lpc = iso_lpc(:,1);
 
 y_qua_lpc = Quantification1LPC1440x1v1(x3_lpc);
 
-disp("Quantification Result (LPC)")
-disp(y_qua_lpc)
+% disp("Quantification Result (LPC)")
+% disp(y_qua_lpc)
 
 combinedmat3_lpc = [numbered_column3_lpc, x3_lpc, y_qua_lpc];
 
 %% Quantification, HPC
-
+disp("• High Pressure Compressor (HPC)")
 % Take the result of the isolation out
 x3_hpc = iso_hpc(:, 2:14);
 numbered_column3_hpc = iso_hpc(:,1);
 
 y_qua_hpc = Quantification2HPC1440x1v1(x3_hpc);
 
-disp("Quantification Result (HPC)")
-disp(y_qua_hpc)
+% disp("Quantification Result (HPC)")
+% disp(y_qua_hpc)
+
+
+%%%%%%% COMPARISON AND FIGURE %%%%%%%%%%%%%
+FC_HPC = y_qua_hpc(:,1);
+nu_HPC = y_qua_hpc(:,2);
+
+figure;
+subplot(2, 1, 1)
+plot(numbered_column3_hpc, FC_HPC)
+hold on
+plot(numbered_column, xqua(:,1))
+% subplot params
+xlim([0 1200]); % Set X-axis limits from 0 to 6
+ylim([-7 1]);
+%xlabel('Test Case')
+ylabel('Flow Degradation (%)')
+legend({'Predicted', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+hold off
+
+subplot(2, 1, 2)
+plot(numbered_column3_hpc, nu_HPC)
+hold on
+plot(numbered_column, xqua(:,2))
+% subplot params
+% xlim([0 1200]); % Set X-axis limits from 0 to 6
+ylim([-8 1]);
+xlabel('Test Case')
+ylabel('Flow Efficiency (%)')
+legend({'Predicted', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+hold off
+
+saveas(gcf, fullfile('charts', 'HPC_comparison.png'));
+
+
 
 combinedmat3_hpc = [numbered_column3_hpc, x3_hpc, y_qua_hpc];
 
 %% Quantification, HPT
+disp("• High Pressure Turbine (HPT)")
+
 
 % Take the result of the isolation out
 x3_hpt = iso_hpt(:, 2:14);
@@ -169,25 +214,31 @@ numbered_column3_hpt = iso_hpt(:,1);
 
 y_qua_hpt =Quantification3HPT1440x1v1(x3_hpt);
 
-disp("Quantification Result (HPC)")
-disp(y_qua_hpt)
+% disp("Quantification Result (HPC)")
+% disp(y_qua_hpt)
 
 combinedmat3_hpt = [numbered_column3_hpt, x3_hpt, y_qua_hpt];
 
 %% Quantification, LPT
-
+disp("• Low Pressure Turbine (LPT)")
 % Take the result of the isolation out
 x3_lpt = iso_lpt(:, 2:14);
 numbered_column3_lpt = iso_lpt(:,1);
 
 y_qua_lpt = Quantification4LPT1440x1v1(x3_lpt);
 
-disp("Quantification Result (LPT)")
-disp(y_qua_lpt)
+% disp("Quantification Result (LPT)")
+% disp(y_qua_lpt)
+
+
+
+
 
 combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 
 %% Excel Output
+
+disp("Writing result to Excel...")
 
 % Headers for the sheets (converted to cell array)
 headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
@@ -215,3 +266,6 @@ writecell(data_C, filename, 'Sheet', 'Iso-Qua_LPC');
 writecell(data_D, filename, 'Sheet', 'Iso-Qua_HPC');
 writecell(data_E, filename, 'Sheet', 'Iso-Qua_HPT');
 writecell(data_F, filename, 'Sheet', 'Iso-Qua_LPT');
+
+disp("Excel Generation Finished.")
+disp("RUN FINISHED!")
