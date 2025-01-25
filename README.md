@@ -5,7 +5,8 @@ In this study, the Neural Network Machine Learning is used for failure identific
 3. QUANTIFICATION: The third neural network algorithm quantifies the output values of every failure groups in terms of the change of efficiency (delta_efficiency) and flow capacity change, both compared in percentage of a normal and ideal engine.
 
 ## Parts name:
-* The excel file, `Test HPC.xlsx` is the input datasets. Change this for a new engine data
+* The excel file, `Test HPC.xlsx` and `Quantification-Test-HPC.xlsx` are the input datasets. The first one is a small dataset, while the latter has larger dataset. Change this for a new engine data
+* Excel file, `Quantification-Test-HPC_quares.xlsx` is the actual dataset for quantification result comparison
 * `\Neural-Network-Function\` folder is the neural network parameters folder. Change the file inside if you want to fine tune the result of the parameters
 * The `combined_part.m` is the executable MATLAB subroutine, use this if you want to execute the entire neural network or changing the input dataset name
 * `\chart\` folder is the graphics/visualisation result of the MATLAB subroutine
@@ -23,4 +24,4 @@ In this study, the Neural Network Machine Learning is used for failure identific
 - [ ] Create post-processing
   - [X] Excel post-processing
   - [X] Confusion matrix for detection and isolation part
-  - [ ] Flow Prediction for quantification part
+  - [X] Flow Prediction for quantification part --> improvement for visualisation might be conducted
