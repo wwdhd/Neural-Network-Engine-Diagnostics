@@ -4,6 +4,8 @@ In this study, the Neural Network Machine Learning is used for failure identific
 2. ISOLATION: The failing cases are then specifically analysed in terms of the failing part using the second neural network algorithm, whether it is LPC, HPC, HPT, or LPT. The sorting algorithm then put the cases into specific failure groups (LPC failure groups, HPC failure groups, etc.)
 3. QUANTIFICATION: The third neural network algorithm quantifies the output values of every failure groups in terms of the change of efficiency (delta_efficiency) and flow capacity change, both compared in percentage of a normal and ideal engine.
 
+The NN parameters were made using Deep Learning Toolbox in MATLAB, and the input data is generated using Pythia, an in-house application made by Cranfield University.
+
 ## Parts name:
 * The excel file, `Test HPC.xlsx` and `Quantification-Test-HPC.xlsx` are the input datasets. The first one is a small dataset, while the latter has larger dataset. Change this for a new engine data
 * Excel file, `Quantification-Test-HPC_quares.xlsx` is the actual dataset for quantification result comparison
