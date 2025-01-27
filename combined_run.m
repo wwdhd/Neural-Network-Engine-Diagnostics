@@ -11,7 +11,7 @@ disp("Reading Input File...")
 % Construct the full path to the Excel file
 inputdat = fullfile(currentFolder, 'Quantification-Test-HPC.xlsx');
 quainput = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
-quainput = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
+quainput2 = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
 
 % Read the data from the Excel file
 x1 = readmatrix(inputdat);
@@ -174,34 +174,62 @@ y_qua_hpc = Quantification2HPC1440x1v1(x3_hpc);
 FC_HPC = y_qua_hpc(:,1);
 nu_HPC = y_qua_hpc(:,2);
 
+n_of_step = 12;
+n_of_dat = 8;
+
+% FC_step = floor((numbered_column3_hpc - 1) ./ (n_of_step .* n_of_dat)) + 1;
+% eff_step = mod(ceil(numbered_column3_hpc ./ n_of_dat) - 1, n_of_step) + 1;
+% eff_substep = mod(numbered_column3_hpc - 1, n_of_dat) + 1;
+% eff_sequence = (96*(eff_step-1))+(8*(FC_step-1))+eff_substep; 
+
+eff_case_num = (96 * mod(ceil(numbered_column3_hpc / 8) - 1, 12)) + (8 * floor((numbered_column3_hpc - 1) / 96)) + (mod(numbered_column3_hpc - 1, 8) + 1);
+
+% Plot 1: HPC_comparison_FlowDeg
 figure;
-plot(numbered_column3_hpc, sort(FC_HPC))
+plot(numbered_column3_hpc, (FC_HPC))
 hold on
-plot(numbered_column, sort(xqua(:,1)))
-% subplot params
+plot(numbered_column, (xqua(:,1)))
+% Subplot parameters
 xlim([0 1200]);
 ylim([-7 1]);
-%xlabel('Test Case')
-ylabel('Flow Degradation (%)')
-legend({'Predicted', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+xlabel('Dataset')
+ylabel('Flow Capacity (%)')
+legend({'Target', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
 hold off
 
-saveas(gcf, fullfile('charts', 'HPC_comparison_FlowDeg.png'));
+% Set font to Times New Roman
+% set(gca, 'FontName', 'Times New Roman');
 
+% Change the size of the plot to a 1:3 ratio landscape
+set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
+
+% Save the figure as a PNG file
+ saveas(gcf, fullfile('charts', 'HPC_comparison_FlowDeg.png'));
+
+% Plot 2: HPC_comparison_FlowDeg
 figure;
-plot(numbered_column3_hpc, sort(nu_HPC))
+plot(numbered_column3_hpc, (nu_HPC))
 hold on
-plot(numbered_column, sort(xqua(:,2)))
-% subplot params
+plot(numbered_column, (xqua(:,2)))
+% Subplot parameters
 % xlim([0 1200]); 
 ylim([-7 1]);
-xlabel('Test Case')
-ylabel('Flow Efficiency (%)')
-legend({'Predicted', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+xlabel('Dataset')
+ylabel('Efficency (%)')
+legend({'Target', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
 hold off
 
+% Set font to Times New Roman
+%set(gca, 'FontName', 'Times New Roman');
+
+% Change the size of the plot to a 1:3 ratio landscape
+set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
+
+% Save the figure as a PNG file
 saveas(gcf, fullfile('charts', 'HPC_comparison_FlowEff.png'));
 
+
+%%
 
 %%%%%% PERFORMANCE STATISTICS %%%%%
 
@@ -214,11 +242,28 @@ range_B = range(nu_HPC);
 mean_B = mean(nu_HPC);
 std_B = std(nu_HPC);
 
+% Error
+xqua_trunc_1 = xqua(1:length(FC_HPC), 1);
+xqua_trunc_2 = xqua(1:length(nu_HPC), 2);
+
+error_fc = FC_HPC - xqua_trunc_1;
+error_eff = nu_HPC - xqua_trunc_2;
+
+% L1 Norm (Sum of absolute differences)
+L1_fc = sum(abs(error_fc)) / sum(abs(xqua_trunc_1)) * 100;
+L1_eff = sum(abs(error_eff)) / sum(abs(xqua_trunc_2)) * 100;
+
+% L2 Norm (Square root of sum of squared differences)
+L2_fc = sqrt(sum(error_fc.^2)) / sqrt(sum(xqua_trunc_1.^2)) * 100;
+L2_eff = sqrt(sum(error_eff.^2)) / sqrt(sum(xqua_trunc_2.^2)) * 100;
+
 % Create the table data
-data = {'Statistics', 'Flow Degradation', 'Flow Efficiency'; 
+data = {'Statistics', 'Flow Capacity', 'Efficiency'; 
         'Range', range_A, range_B; 
         'Mean', mean_A, mean_B; 
-        'Standard Deviation', std_A, std_B};
+        'Standard Deviation', std_A, std_B;
+        'L1 Error (%)', L1_fc, L1_eff; 
+        'L2 Error (%)', L2_fc, L2_eff};
 
 % Define table dimensions
 numRows = size(data, 1);
@@ -229,14 +274,14 @@ figure;
 hold on;
 
 % Set the figure size and remove axes
-set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 300]);
+set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 350]);
 axis off;
 
 % Define table parameters
-cellWidth = 100; % Width of each cell
+cellWidth = 120; % Width of each cell (adjusted for the new rows)
 cellHeight = 30; % Height of each cell
 startX = 50; % Starting X position
-startY = 250; % Starting Y position (top of the table)
+startY = 320; % Starting Y position (top of the table)
 
 % Draw the table borders
 for row = 0:numRows
@@ -264,6 +309,7 @@ end
 % Save the figure as a PNG file
 saveas(gcf, fullfile('charts', 'HPC_statistics.png'));
 hold off;
+
 
 
 
@@ -304,35 +350,35 @@ y_qua_lpt = Quantification4LPT1440x1v1(x3_lpt);
 combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 
 %% Excel Output
-
-disp("Writing result to Excel...")
-
-% Headers for the sheets (converted to cell array)
-headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
-headers_B = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Detection Result'};
-headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Flow Degradation (%)', 'Flow Efficiency(%)'};
-
-%Combining x1 with case number
-A = [numbered_column, x1]; 
-
-% Convert numeric data in A to cell array
-data_A = [headers_A; num2cell(A)];
-data_B = [headers_B; num2cell(combinedfiltered)];
-data_C = [headers_C; num2cell(combinedmat3_lpc)];
-data_D = [headers_C; num2cell(combinedmat3_hpc)];
-data_E = [headers_C; num2cell(combinedmat3_hpt)];
-data_F = [headers_C; num2cell(combinedmat3_lpt)];
-
-% Define the filename
-filename = 'NN-Results_qua-test.xlsx';
-
-% Write data_A to the first sheet with headers
-writecell(data_A, filename, 'Sheet', 'Input_Case');
-writecell(data_B, filename, 'Sheet', 'Detection');
-writecell(data_C, filename, 'Sheet', 'Iso-Qua_LPC');
-writecell(data_D, filename, 'Sheet', 'Iso-Qua_HPC');
-writecell(data_E, filename, 'Sheet', 'Iso-Qua_HPT');
-writecell(data_F, filename, 'Sheet', 'Iso-Qua_LPT');
-
-disp("Excel Generation Finished.")
-disp("RUN FINISHED!")
+% 
+% disp("Writing result to Excel...")
+% 
+% % Headers for the sheets (converted to cell array)
+% headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
+% headers_B = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Detection Result'};
+% headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Flow Degradation (%)', 'Flow Efficiency(%)'};
+% 
+% %Combining x1 with case number
+% A = [numbered_column, x1]; 
+% 
+% % Convert numeric data in A to cell array
+% data_A = [headers_A; num2cell(A)];
+% data_B = [headers_B; num2cell(combinedfiltered)];
+% data_C = [headers_C; num2cell(combinedmat3_lpc)];
+% data_D = [headers_C; num2cell(combinedmat3_hpc)];
+% data_E = [headers_C; num2cell(combinedmat3_hpt)];
+% data_F = [headers_C; num2cell(combinedmat3_lpt)];
+% 
+% % Define the filename
+% filename = 'NN-Results_qua-test.xlsx';
+% 
+% % Write data_A to the first sheet with headers
+% writecell(data_A, filename, 'Sheet', 'Input_Case');
+% writecell(data_B, filename, 'Sheet', 'Detection');
+% writecell(data_C, filename, 'Sheet', 'Iso-Qua_LPC');
+% writecell(data_D, filename, 'Sheet', 'Iso-Qua_HPC');
+% writecell(data_E, filename, 'Sheet', 'Iso-Qua_HPT');
+% writecell(data_F, filename, 'Sheet', 'Iso-Qua_LPT');
+% 
+% disp("Excel Generation Finished.")
+% disp("RUN FINISHED!")
