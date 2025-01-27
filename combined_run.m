@@ -11,6 +11,7 @@ disp("Reading Input File...")
 % Construct the full path to the Excel file
 inputdat = fullfile(currentFolder, 'Quantification-Test-HPC.xlsx');
 quainput = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
+quainput = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
 
 % Read the data from the Excel file
 x1 = readmatrix(inputdat);
@@ -174,31 +175,97 @@ FC_HPC = y_qua_hpc(:,1);
 nu_HPC = y_qua_hpc(:,2);
 
 figure;
-subplot(2, 1, 1)
-plot(numbered_column3_hpc, FC_HPC)
+plot(numbered_column3_hpc, sort(FC_HPC))
 hold on
-plot(numbered_column, xqua(:,1))
+plot(numbered_column, sort(xqua(:,1)))
 % subplot params
-xlim([0 1200]); % Set X-axis limits from 0 to 6
+xlim([0 1200]);
 ylim([-7 1]);
 %xlabel('Test Case')
 ylabel('Flow Degradation (%)')
 legend({'Predicted', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
 hold off
 
-subplot(2, 1, 2)
-plot(numbered_column3_hpc, nu_HPC)
+saveas(gcf, fullfile('charts', 'HPC_comparison_FlowDeg.png'));
+
+figure;
+plot(numbered_column3_hpc, sort(nu_HPC))
 hold on
-plot(numbered_column, xqua(:,2))
+plot(numbered_column, sort(xqua(:,2)))
 % subplot params
-% xlim([0 1200]); % Set X-axis limits from 0 to 6
-ylim([-8 1]);
+% xlim([0 1200]); 
+ylim([-7 1]);
 xlabel('Test Case')
 ylabel('Flow Efficiency (%)')
 legend({'Predicted', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
 hold off
 
-saveas(gcf, fullfile('charts', 'HPC_comparison.png'));
+saveas(gcf, fullfile('charts', 'HPC_comparison_FlowEff.png'));
+
+
+%%%%%% PERFORMANCE STATISTICS %%%%%
+
+% Calculate the range, mean, and standard deviation for array A
+range_A = range(FC_HPC);
+mean_A = mean(FC_HPC);
+std_A = std(FC_HPC);
+
+range_B = range(nu_HPC);
+mean_B = mean(nu_HPC);
+std_B = std(nu_HPC);
+
+% Create the table data
+data = {'Statistics', 'Flow Degradation', 'Flow Efficiency'; 
+        'Range', range_A, range_B; 
+        'Mean', mean_A, mean_B; 
+        'Standard Deviation', std_A, std_B};
+
+% Define table dimensions
+numRows = size(data, 1);
+numCols = size(data, 2);
+
+% Create a figure
+figure;
+hold on;
+
+% Set the figure size and remove axes
+set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 300]);
+axis off;
+
+% Define table parameters
+cellWidth = 100; % Width of each cell
+cellHeight = 30; % Height of each cell
+startX = 50; % Starting X position
+startY = 250; % Starting Y position (top of the table)
+
+% Draw the table borders
+for row = 0:numRows
+    % Draw horizontal lines
+    y = startY - row * cellHeight;
+    line([startX, startX + numCols * cellWidth], [y, y], 'Color', 'k', 'LineWidth', 1);
+end
+
+for col = 0:numCols
+    % Draw vertical lines
+    x = startX + col * cellWidth;
+    line([x, x], [startY, startY - numRows * cellHeight], 'Color', 'k', 'LineWidth', 1);
+end
+
+% Fill in the table data
+for row = 1:numRows
+    for col = 1:numCols
+        x = startX + (col - 0.5) * cellWidth; % Center of the cell in X
+        y = startY - (row - 0.5) * cellHeight; % Center of the cell in Y
+        text(x, y, num2str(data{row, col}), 'FontSize', 10, 'HorizontalAlignment', 'center', ...
+            'VerticalAlignment', 'middle', 'FontName', 'Times New Roman');
+    end
+end
+
+% Save the figure as a PNG file
+saveas(gcf, fullfile('charts', 'HPC_statistics.png'));
+hold off;
+
+
 
 
 
@@ -243,7 +310,7 @@ disp("Writing result to Excel...")
 % Headers for the sheets (converted to cell array)
 headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
 headers_B = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Detection Result'};
-headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'delta_efficiency', 'Flow Capacity'};
+headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Flow Degradation (%)', 'Flow Efficiency(%)'};
 
 %Combining x1 with case number
 A = [numbered_column, x1]; 
