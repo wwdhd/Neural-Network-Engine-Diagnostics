@@ -14,6 +14,8 @@ The NN parameters were made using Deep Learning Toolbox in MATLAB, and the input
 * `\chart\` folder is the graphics/visualisation result of the MATLAB subroutine
 * `NN-results.xslx` is the excel post-processing result of the diagnostics. It shows the sorted results of detection, isolation+quantification data
 
+## Features
+(On progress)
 
 ## Checklists
 
@@ -26,4 +28,8 @@ The NN parameters were made using Deep Learning Toolbox in MATLAB, and the input
 - [ ] Create post-processing
   - [X] Excel post-processing
   - [X] Confusion matrix for detection and isolation part
-  - [X] Flow Prediction for quantification part --> improvement for visualisation might be conducted
+  - [X] Flow Capacity and Efficiency prediction for Quantification part --> partial, further sorting needed
+  - [ ] Statistics
+    - [X] Range, mean, stddev
+    - [X] Errors (L1, L2)
+    - [ ] 3 sigmas rule of thumb
