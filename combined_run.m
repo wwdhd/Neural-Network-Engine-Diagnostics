@@ -172,7 +172,7 @@ y_qua_hpc = Quantification2HPC1440x1v1(x3_hpc);
 
 %%%%%%% COMPARISON AND FIGURE %%%%%%%%%%%%%
 FC_HPC = y_qua_hpc(:,1);
-nu_HPC = y_qua_hpc(:,2);
+eff_HPC = y_qua_hpc(:,2);
 
 % n_of_step = 12;
 % n_of_dat = 8;
@@ -207,7 +207,7 @@ set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
 
 % Plot 2: HPC_comparison_FlowDeg
 figure;
-plot(numbered_column3_hpc, (nu_HPC))
+plot(numbered_column3_hpc, (eff_HPC))
 hold on
 plot(numbered_column, (xqua(:,2)))
 % Subplot parameters
@@ -231,21 +231,21 @@ saveas(gcf, fullfile('charts', 'HPC_comparison_FlowEff.png'));
 %%%%%% PERFORMANCE STATISTICS %%%%%
 
 % Calculate the range, mean, and standard deviation for array A (FC)
-range_A = range(FC_HPC);
-mean_A = mean(FC_HPC);
-std_A = std(FC_HPC);
+range_FC = range(FC_HPC);
+mean_FC = mean(FC_HPC);
+std_FC = std(FC_HPC);
 
 % Range Mean StdDev for array B (Eff)
-range_B = range(nu_HPC);
-mean_B = mean(nu_HPC);
-std_B = std(nu_HPC);
+range_eff = range(eff_HPC);
+mean_eff = mean(eff_HPC);
+std_eff = std(eff_HPC);
 
 % Error
 xqua_trunc_1 = xqua(1:length(FC_HPC), 1);
-xqua_trunc_2 = xqua(1:length(nu_HPC), 2);
+xqua_trunc_2 = xqua(1:length(eff_HPC), 2);
 
 error_fc = FC_HPC - xqua_trunc_1;
-error_eff = nu_HPC - xqua_trunc_2;
+error_eff = eff_HPC - xqua_trunc_2;
 
 % L1 Norm (Sum of absolute differences)
 L1_fc = sum(abs(error_fc)) / sum(abs(xqua_trunc_1)) * 100;
@@ -255,13 +255,25 @@ L1_eff = sum(abs(error_eff)) / sum(abs(xqua_trunc_2)) * 100;
 L2_fc = sqrt(sum(error_fc.^2)) / sqrt(sum(xqua_trunc_1.^2)) * 100;
 L2_eff = sqrt(sum(error_eff.^2)) / sqrt(sum(xqua_trunc_2.^2)) * 100;
 
-% Create the table data
+% Compute standard deviation percentage ranges
+sigma1_FC = abs((std_FC / mean_FC) * 100);
+sigma2_FC = abs((2 * std_FC / mean_FC) * 100);
+sigma3_FC = abs((3 * std_FC / mean_FC) * 100);
+
+sigma1_eff = abs((std_eff / mean_eff) * 100);
+sigma2_eff = abs((2 * std_eff / mean_eff) * 100);
+sigma3_eff = abs((3 * std_eff / mean_eff) * 100);
+
+% Create the table data with sigma values
 data = {'Statistics', 'Flow Capacity', 'Efficiency'; 
-        'Range', range_A, range_B; 
-        'Mean', mean_A, mean_B; 
-        'Standard Deviation', std_A, std_B;
-        'L1 Error (%)', L1_fc, L1_eff; 
-        'L2 Error (%)', L2_fc, L2_eff};
+        'Range', range_FC, range_eff; 
+        'Mean', mean_FC, mean_eff; 
+        'Standard Deviation', std_FC, std_eff;
+        'Absolute Error (%)', L1_fc, L1_eff; 
+        'RMS Error (%)', L2_fc, L2_eff;
+        '1σ (%)', sigma1_FC, sigma1_eff; 
+        '2σ (%)', sigma2_FC, sigma2_eff; 
+        '3σ (%)', sigma3_FC, sigma3_eff};
 
 % Define table dimensions
 numRows = size(data, 1);
@@ -272,24 +284,22 @@ figure;
 hold on;
 
 % Set the figure size and remove axes
-set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 350]);
+set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 400]); % Increased height for new rows
 axis off;
 
 % Define table parameters
-cellWidth = 120; % Width of each cell (adjusted for the new rows)
+cellWidth = 120; % Width of each cell
 cellHeight = 30; % Height of each cell
 startX = 50; % Starting X position
-startY = 320; % Starting Y position (top of the table)
+startY = 370; % Adjusted for extra rows
 
 % Draw the table borders
 for row = 0:numRows
-    % Draw horizontal lines
     y = startY - row * cellHeight;
     line([startX, startX + numCols * cellWidth], [y, y], 'Color', 'k', 'LineWidth', 1);
 end
 
 for col = 0:numCols
-    % Draw vertical lines
     x = startX + col * cellWidth;
     line([x, x], [startY, startY - numRows * cellHeight], 'Color', 'k', 'LineWidth', 1);
 end
@@ -297,9 +307,17 @@ end
 % Fill in the table data
 for row = 1:numRows
     for col = 1:numCols
-        x = startX + (col - 0.5) * cellWidth; % Center of the cell in X
-        y = startY - (row - 0.5) * cellHeight; % Center of the cell in Y
-        text(x, y, num2str(data{row, col}), 'FontSize', 10, 'HorizontalAlignment', 'center', ...
+        x = startX + (col - 0.5) * cellWidth;
+        y = startY - (row - 0.5) * cellHeight;
+        
+        % Convert numeric values to strings and format percentages
+        if isnumeric(data{row, col})
+            textStr = sprintf('%.2f', data{row, col}); 
+        else
+            textStr = data{row, col}; % Keep string values as they are
+        end
+        
+        text(x, y, textStr, 'FontSize', 10, 'HorizontalAlignment', 'center', ...
             'VerticalAlignment', 'middle', 'FontName', 'Times New Roman');
     end
 end
@@ -307,10 +325,6 @@ end
 % Save the figure as a PNG file
 saveas(gcf, fullfile('charts', 'HPC_statistics.png'));
 hold off;
-
-
-
-
 
 
 combinedmat3_hpc = [numbered_column3_hpc, x3_hpc, y_qua_hpc];
