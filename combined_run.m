@@ -46,8 +46,8 @@ plotconfusion(groundTruthBinary, y_det_binary);
 
 % Add title
 title('Detection Confusion Matrix');
-xlabel('Predicted');
-ylabel('True');
+xlabel('Output');
+ylabel('Target');
 
 % Create the folder if it doesn't exist
 if ~exist('charts', 'dir')
@@ -121,8 +121,8 @@ plotconfusion(true_onehot, predicted_onehot);
 
 % Add title
 title('Isolation Confusion Matrix');
-xlabel('Predicted Class');
-ylabel('True Class');
+xlabel('Output');
+ylabel('Target');
 saveas(gcf, fullfile('charts', 'plotconfusion_isolation_qua_test.png'));
 
 
@@ -174,15 +174,14 @@ y_qua_hpc = Quantification2HPC1440x1v1(x3_hpc);
 FC_HPC = y_qua_hpc(:,1);
 nu_HPC = y_qua_hpc(:,2);
 
-n_of_step = 12;
-n_of_dat = 8;
+% n_of_step = 12;
+% n_of_dat = 8;
 
 % FC_step = floor((numbered_column3_hpc - 1) ./ (n_of_step .* n_of_dat)) + 1;
 % eff_step = mod(ceil(numbered_column3_hpc ./ n_of_dat) - 1, n_of_step) + 1;
 % eff_substep = mod(numbered_column3_hpc - 1, n_of_dat) + 1;
 % eff_sequence = (96*(eff_step-1))+(8*(FC_step-1))+eff_substep; 
-
-eff_case_num = (96 * mod(ceil(numbered_column3_hpc / 8) - 1, 12)) + (8 * floor((numbered_column3_hpc - 1) / 96)) + (mod(numbered_column3_hpc - 1, 8) + 1);
+% eff_case_num = (96 * mod(ceil(numbered_column3_hpc / 8) - 1, 12)) + (8 * floor((numbered_column3_hpc - 1) / 96)) + (mod(numbered_column3_hpc - 1, 8) + 1);
 
 % Plot 1: HPC_comparison_FlowDeg
 figure;
@@ -231,11 +230,12 @@ saveas(gcf, fullfile('charts', 'HPC_comparison_FlowEff.png'));
 %%
 %%%%%% PERFORMANCE STATISTICS %%%%%
 
-% Calculate the range, mean, and standard deviation for array A
+% Calculate the range, mean, and standard deviation for array A (FC)
 range_A = range(FC_HPC);
 mean_A = mean(FC_HPC);
 std_A = std(FC_HPC);
 
+% Range Mean StdDev for array B (Eff)
 range_B = range(nu_HPC);
 mean_B = mean(nu_HPC);
 std_B = std(nu_HPC);
