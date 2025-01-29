@@ -228,7 +228,7 @@ set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
 % Save the figure as a PNG file
 saveas(gcf, fullfile('charts', 'HPC_comparison_FlowEff.png'));
 
-
+%%
 %%%%%% PERFORMANCE STATISTICS %%%%%
 
 % Calculate the range, mean, and standard deviation for array A
