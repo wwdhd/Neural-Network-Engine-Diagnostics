@@ -4,8 +4,6 @@ In this study, the Neural Network Machine Learning is used for failure identific
 2. ISOLATION: The failing cases are then specifically analysed in terms of the failing part using the second neural network algorithm, whether it is LPC, HPC, HPT, or LPT. The sorting algorithm then put the cases into specific failure groups (LPC failure groups, HPC failure groups, etc.)
 3. QUANTIFICATION: The third neural network algorithm quantifies the output values of every failure groups in terms of the change of efficiency (delta_efficiency) and flow capacity change, both compared in percentage of a normal and ideal engine.
 
-The NN parameters were made using Deep Learning Toolbox in MATLAB, and the input data is generated using Pythia, an in-house application made by Cranfield University.
-
 ## Parts name:
 * The excel file, `Test HPC.xlsx` and `Quantification-Test-HPC.xlsx` are the input datasets. The first one is a small dataset, while the latter has larger dataset. Change this for a new engine data
 * Excel file, `Quantification-Test-HPC_quares.xlsx` is the actual dataset for quantification result comparison
@@ -15,21 +13,11 @@ The NN parameters were made using Deep Learning Toolbox in MATLAB, and the input
 * `NN-results.xslx` is the excel post-processing result of the diagnostics. It shows the sorted results of detection, isolation+quantification data
 
 ## Features
-(On progress)
+1. Neural Network Analysis on Detection, Isolation, and Quantification
+2. Post-processing, including (on the order):
+   1. Confusion matrix for detection and isolation phase
+   2. Visualisation for the quantification part for both flow capacity and efficiency
+   3. Statistics for flow capacity and efficiency result: Range, Mean, Standard Deviation, Errors (L1 and L2), 3-sigmas
+   4. Microsoft Excel output for all of the calculations
 
-## Checklists
-
-- [x] Make 1 part of the entire neural network
-- [X] Make the entire part of the neural network
-  - [X] Low Pressure Compressor (LPC)
-  - [X] High Pressure Compressor (HPC)
-  - [X] High Pressure Turbine (HPT)
-  - [X] Low Pressure Turbine (LPT)
-- [ ] Create post-processing
-  - [X] Excel post-processing
-  - [X] Confusion matrix for detection and isolation part
-  - [X] Flow Capacity and Efficiency prediction for Quantification part --> partial, further sorting needed
-  - [ ] Statistics
-    - [X] Range, mean, stddev
-    - [X] Errors (L1, L2)
-    - [ ] 3 sigmas rule of thumb
+The NN parameters were made using Deep Learning Toolbox in MATLAB, and the input data is generated using Pythia, an in-house application made by Cranfield University.
