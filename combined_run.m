@@ -22,10 +22,6 @@ disp("Reading Input File Success!")
 % Add the function folder path
 addpath(fullfile(currentFolder, 'Neural-Network-Function'));
 
-% Display the data to validate readability
-% disp('Input Data:')
-% disp(x1);
-
 %% DETECTION
 disp("Conducting Detection...")
 % Call the neural network function
@@ -313,6 +309,7 @@ combinedmat3_hpt = [numbered_column3_hpt, x3_hpt, y_qua_hpt];
 
 %% Quantification, LPT
 disp("• Low Pressure Turbine (LPT)")
+
 % Take the result of the isolation out
 x3_lpt = iso_lpt(:, 2:14);
 numbered_column3_lpt = iso_lpt(:,1);
