@@ -90,16 +90,12 @@ numbered_column2 = combinedfiltered(:, 1);
 y_iso = abs(round(Isolation1440x4v1(x2))); %absolute and round altogether
 
 % Replace each row with a one-hot encoding of the maximum value
-[numRows, numCols] = size(y_iso);
+[numRows, ~] = size(y_iso);
 y_iso_mod = zeros(size(y_iso));
 for i = 1:numRows
     [~, colIdx] = max(y_iso(i, :)); % Find index of the maximum value (leftmost in case of ties)
     y_iso_mod(i, colIdx) = 1;          % Set that index to 1
 end
-
-% Display the resulting matrix
-% disp('Modified Matrix:');
-% disp(y_iso_mod);
 
 
 %%%% CONFUSION MATRIX %%%%%%
@@ -125,15 +121,6 @@ xlabel('Output');
 ylabel('Target');
 saveas(gcf, fullfile('charts', 'plotconfusion_isolation_qua_test.png'));
 
-
-
-% Display the matrix as an image
-% figure;
-% imagesc(abs(y_iso)); % Display the matrix as a scaled image
-% colormap(gray); % Set the colormap to grayscale
-% axis equal tight; % Adjust the axes
-% title('Grid Representation of y\_iso');
-
 %Combine the x2 with y_iso
 combinedmat2 = [numbered_column2, x2, abs(y_iso_mod)];
 
@@ -153,9 +140,6 @@ numbered_column3_lpc = iso_lpc(:,1);
 
 y_qua_lpc = Quantification1LPC1440x1v1(x3_lpc);
 
-% disp("Quantification Result (LPC)")
-% disp(y_qua_lpc)
-
 combinedmat3_lpc = [numbered_column3_lpc, x3_lpc, y_qua_lpc];
 
 %% Quantification, HPC
@@ -166,22 +150,9 @@ numbered_column3_hpc = iso_hpc(:,1);
 
 y_qua_hpc = Quantification2HPC1440x1v1(x3_hpc);
 
-% disp("Quantification Result (HPC)")
-% disp(y_qua_hpc)
-
-
 %%%%%%% COMPARISON AND FIGURE %%%%%%%%%%%%%
 FC_HPC = y_qua_hpc(:,1);
 eff_HPC = y_qua_hpc(:,2);
-
-% n_of_step = 12;
-% n_of_dat = 8;
-
-% FC_step = floor((numbered_column3_hpc - 1) ./ (n_of_step .* n_of_dat)) + 1;
-% eff_step = mod(ceil(numbered_column3_hpc ./ n_of_dat) - 1, n_of_step) + 1;
-% eff_substep = mod(numbered_column3_hpc - 1, n_of_dat) + 1;
-% eff_sequence = (96*(eff_step-1))+(8*(FC_step-1))+eff_substep; 
-% eff_case_num = (96 * mod(ceil(numbered_column3_hpc / 8) - 1, 12)) + (8 * floor((numbered_column3_hpc - 1) / 96)) + (mod(numbered_column3_hpc - 1, 8) + 1);
 
 % Plot 1: HPC_comparison_FlowDeg
 figure;
@@ -195,9 +166,6 @@ xlabel('Dataset')
 ylabel('Flow Capacity (%)')
 legend({'Target', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
 hold off
-
-% Set font to Times New Roman
-% set(gca, 'FontName', 'Times New Roman');
 
 % Change the size of the plot to a 1:3 ratio landscape
 set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
@@ -326,7 +294,6 @@ end
 saveas(gcf, fullfile('charts', 'HPC_statistics.png'));
 hold off;
 
-
 combinedmat3_hpc = [numbered_column3_hpc, x3_hpc, y_qua_hpc];
 
 %% Quantification, HPT
@@ -352,45 +319,38 @@ numbered_column3_lpt = iso_lpt(:,1);
 
 y_qua_lpt = Quantification4LPT1440x1v1(x3_lpt);
 
-% disp("Quantification Result (LPT)")
-% disp(y_qua_lpt)
-
-
-
-
-
 combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 
-%% Excel Output
-% 
-% disp("Writing result to Excel...")
-% 
-% % Headers for the sheets (converted to cell array)
-% headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
-% headers_B = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Detection Result'};
-% headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Flow Degradation (%)', 'Flow Efficiency(%)'};
-% 
-% %Combining x1 with case number
-% A = [numbered_column, x1]; 
-% 
-% % Convert numeric data in A to cell array
-% data_A = [headers_A; num2cell(A)];
-% data_B = [headers_B; num2cell(combinedfiltered)];
-% data_C = [headers_C; num2cell(combinedmat3_lpc)];
-% data_D = [headers_C; num2cell(combinedmat3_hpc)];
-% data_E = [headers_C; num2cell(combinedmat3_hpt)];
-% data_F = [headers_C; num2cell(combinedmat3_lpt)];
-% 
-% % Define the filename
-% filename = 'NN-Results_qua-test.xlsx';
-% 
-% % Write data_A to the first sheet with headers
-% writecell(data_A, filename, 'Sheet', 'Input_Case');
-% writecell(data_B, filename, 'Sheet', 'Detection');
-% writecell(data_C, filename, 'Sheet', 'Iso-Qua_LPC');
-% writecell(data_D, filename, 'Sheet', 'Iso-Qua_HPC');
-% writecell(data_E, filename, 'Sheet', 'Iso-Qua_HPT');
-% writecell(data_F, filename, 'Sheet', 'Iso-Qua_LPT');
-% 
-% disp("Excel Generation Finished.")
-% disp("RUN FINISHED!")
+% Excel Output
+
+disp("Writing result to Excel...")
+
+% Headers for the sheets (converted to cell array)
+headers_A = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN'};
+headers_B = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Detection Result'};
+headers_C = {'Case-No', 'P Total 3', 'T Total 3', 'P Total 5', 'T Total 5', 'P Total 6', 'T Total 6', 'P Total 10', 'T Total 10', 'P Total 12', 'T Total 12', 'Fuel Flow 0', 'Comp 1 PCN', 'Comp 3 PCN', 'Flow Degradation (%)', 'Flow Efficiency(%)'};
+
+%Combining x1 with case number
+A = [numbered_column, x1]; 
+
+% Convert numeric data in A to cell array
+data_A = [headers_A; num2cell(A)];
+data_B = [headers_B; num2cell(combinedfiltered)];
+data_C = [headers_C; num2cell(combinedmat3_lpc)];
+data_D = [headers_C; num2cell(combinedmat3_hpc)];
+data_E = [headers_C; num2cell(combinedmat3_hpt)];
+data_F = [headers_C; num2cell(combinedmat3_lpt)];
+
+% Define the filename
+filename = 'NN-Results_qua-test.xlsx';
+
+% Write data_A to the first sheet with headers
+writecell(data_A, filename, 'Sheet', 'Input_Case');
+writecell(data_B, filename, 'Sheet', 'Detection');
+writecell(data_C, filename, 'Sheet', 'Iso-Qua_LPC');
+writecell(data_D, filename, 'Sheet', 'Iso-Qua_HPC');
+writecell(data_E, filename, 'Sheet', 'Iso-Qua_HPT');
+writecell(data_F, filename, 'Sheet', 'Iso-Qua_LPT');
+
+disp("Excel Generation Finished.")
+disp("RUN FINISHED!")
