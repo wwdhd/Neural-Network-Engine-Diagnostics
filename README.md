@@ -1,5 +1,5 @@
 # Neural Network Application in Engine Diagnostics
-In this study, the Neural Network Machine Learning is used for failure identification in an aircraft engine. In order to execute the failure identification and quantification, the algorithm will do as such:
+In this study, the Artifical Neural Network algorithm is used for failure identification in an aircraft engine. In order to execute the failure identification and quantification, the algorithm will do as follows:
 1. DETECTION: The first neural network must detect if the overall engine can be classified as failing. Then, the cases in which the engine is not failing is excluded from the calculation, ensuring the efficiency and effectivity of the calculation.
 2. ISOLATION: The failing cases are then specifically analysed in terms of the failing part using the second neural network algorithm, whether it is LPC, HPC, HPT, or LPT. The sorting algorithm then put the cases into specific failure groups (LPC failure groups, HPC failure groups, etc.)
 3. QUANTIFICATION: The third neural network algorithm quantifies the output values of every failure groups in terms of the change of efficiency (delta_efficiency) and flow capacity change, both compared in percentage of a normal and ideal engine.
@@ -20,4 +20,4 @@ In this study, the Neural Network Machine Learning is used for failure identific
    3. Statistics for flow capacity and efficiency result: Range, Mean, Standard Deviation, Errors (L1 and L2), 3-sigmas
    4. Microsoft Excel output for all of the calculations
 
-The NN parameters were made using Deep Learning Toolbox in MATLAB, and the input data is generated using Pythia, an in-house application made by Cranfield University.
+The Neural Network parameters were made using Deep Learning Toolbox in MATLAB, and the input data is generated using Pythia, an in-house application made by Cranfield University.
