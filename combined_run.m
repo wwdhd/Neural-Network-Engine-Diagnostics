@@ -11,7 +11,6 @@ disp("Reading Input File...")
 % Construct the full path to the Excel file
 inputdat = fullfile(currentFolder, 'Quantification-Test-HPC.xlsx');
 quainput = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
-quainput2 = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
 
 % Read the data from the Excel file
 x1 = readmatrix(inputdat);
@@ -220,13 +219,53 @@ L2_fc = sqrt(sum(error_fc.^2)) / sqrt(sum(xqua_trunc_1.^2)) * 100;
 L2_eff = sqrt(sum(error_eff.^2)) / sqrt(sum(xqua_trunc_2.^2)) * 100;
 
 % Compute standard deviation percentage ranges
-sigma1_FC = abs((std_FC / mean_FC) * 100);
-sigma2_FC = abs((2 * std_FC / mean_FC) * 100);
-sigma3_FC = abs((3 * std_FC / mean_FC) * 100);
+% 1-sigma
+lower_bound_FC_1s = mean_FC - std_FC;
+upper_bound_FC_1s = mean_FC + std_FC;
 
-sigma1_eff = abs((std_eff / mean_eff) * 100);
-sigma2_eff = abs((2 * std_eff / mean_eff) * 100);
-sigma3_eff = abs((3 * std_eff / mean_eff) * 100);
+lower_bound_eff_1s = mean_eff - std_eff;
+upper_bound_eff_1s = mean_eff + std_eff;
+
+% 2-sigma
+lower_bound_FC_2s = mean_FC - 2*std_FC;
+upper_bound_FC_2s = mean_FC + 2*std_FC;
+
+lower_bound_eff_2s = mean_eff - 2*std_eff;
+upper_bound_eff_2s = mean_eff + 2*std_eff;
+
+% 3-sigma
+lower_bound_FC_3s = mean_FC - 3*std_FC;
+upper_bound_FC_3s = mean_FC + 3*std_FC;
+
+lower_bound_eff_3s = mean_eff - 3*std_eff;
+upper_bound_eff_3s = mean_eff + 3*std_eff;
+
+% Count elements within the range
+% 1-sigma
+count_in_range_FC_1s = sum(FC_HPC >= lower_bound_FC_1s & FC_HPC <= upper_bound_FC_1s);
+count_in_range_eff_1s = sum(eff_HPC >= lower_bound_eff_1s & eff_HPC <= upper_bound_eff_1s);
+
+% 2-sigma
+count_in_range_FC_2s = sum(FC_HPC >= lower_bound_FC_2s & FC_HPC <= upper_bound_FC_2s);
+count_in_range_eff_2s = sum(eff_HPC >= lower_bound_eff_2s & eff_HPC <= upper_bound_eff_2s);
+
+% 3-sigma
+count_in_range_FC_3s = sum(FC_HPC >= lower_bound_FC_3s & FC_HPC <= upper_bound_FC_3s);
+count_in_range_eff_3s = sum(eff_HPC >= lower_bound_eff_3s & eff_HPC <= upper_bound_eff_3s);
+
+% Total number of elements
+total_count_FC_HPC = length(FC_HPC);
+total_count_eff_HPC = length(eff_HPC);
+
+% Compute the proportion
+sigma1_FC = (count_in_range_FC_1s / total_count_FC_HPC)*100;
+sigma2_FC = (count_in_range_FC_2s / total_count_FC_HPC)*100;
+sigma3_FC = (count_in_range_FC_3s / total_count_FC_HPC)*100;
+
+
+sigma1_eff = (count_in_range_eff_1s / total_count_eff_HPC)*100;
+sigma2_eff = (count_in_range_eff_2s / total_count_eff_HPC)*100;
+sigma3_eff = (count_in_range_eff_3s / total_count_eff_HPC)*100;
 
 % Create the table data with sigma values
 data = {'Statistics', 'Flow Capacity', 'Efficiency'; 
