@@ -1049,3 +1049,102 @@ combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 % disp("Excel Generation Finished.")
 %%
 disp("RUN FINISHED!")
+
+
+function generate_comparison_figures1(yqua, xqua_lpt, name_prefix)
+    FC = yqua(:,1);
+    eff = yqua(:,2);
+    
+    numbered_column_xqua = (1:size(xqua_lpt, 1))' + numbered_column3(end) - length(xqua_lpt);
+    
+    % Plot 1: Flow Capacity Comparison
+    figure;
+    plot(numbered_column3, FC)
+    hold on
+    plot(numbered_column_xqua, xqua_lpt(:,1))
+    xlim([0 length(xiso)]); 
+    ylim([-1 7]);
+    xlabel('Dataset')
+    ylabel('Flow Capacity (%)')
+    legend({'Target', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+    hold off
+    set(gcf, 'Position', [100, 100, 1000, 400]);
+    saveas(gcf, fullfile('charts', [name_prefix, '_comparison_FlowDeg.png']));
+    
+    % Plot 2: Efficiency Comparison
+    figure;
+    plot(numbered_column3, eff)
+    hold on
+    plot(numbered_column_xqua, xqua_lpt(:,2))
+    xlim([0 length(xiso)]); 
+    ylim([-7.5 1]);
+    xlabel('Dataset')
+    ylabel('Efficiency (%)')
+    legend({'Target', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+    hold off
+    set(gcf, 'Position', [100, 100, 1000, 400]);
+    saveas(gcf, fullfile('charts', [name_prefix, '_comparison_FlowEff.png']));
+    
+    % Compute Statistics
+    stats = compute_statistics(FC, eff, xqua_lpt);
+    
+    % Save Statistics Table
+    save_statistics_table(stats, name_prefix);
+end
+
+function stats = compute_statistics(FC, eff, xqua_lpt)
+    stats.range_FC = range(FC);
+    stats.mean_FC = mean(FC);
+    stats.std_FC = std(FC);
+    stats.range_eff = range(eff);
+    stats.mean_eff = mean(eff);
+    stats.std_eff = std(eff);
+    
+    % Error computation
+    if size(FC, 1) > size(xqua_lpt,1)
+        FC = FC(1:size(xqua_lpt,1), :);
+        eff = eff(1:size(xqua_lpt,1), :);
+    elseif size(FC, 1) < size(xqua_lpt,1)
+        xqua_lpt = xqua_lpt(1:size(FC,1), :);
+    end
+    
+    error_fc = FC - xqua_lpt(:,1);
+    error_eff = eff - xqua_lpt(:,2);
+    
+    % Error metrics
+    stats.L1_fc = sum(abs(error_fc)) / sum(abs(FC)) * 100;
+    stats.L1_eff = sum(abs(error_eff)) / sum(abs(eff)) * 100;
+    stats.L2_fc = sqrt(mean(error_fc.^2)) / mean(abs(xqua_lpt(:,1))) * 100;
+    stats.L2_eff = sqrt(mean(error_eff.^2)) / mean(abs(xqua_lpt(:,2))) * 100;
+    
+    % Min/Max Values
+    stats.min_FC = min(FC);
+    stats.max_FC = max(FC);
+    stats.min_eff = min(eff);
+    stats.max_eff = max(eff);
+end
+
+function save_statistics_table(stats, name_prefix)
+    data = {'Statistics', 'Flow Capacity', 'Efficiency'; 
+            'Range', stats.range_FC, stats.range_eff; 
+            'Minimum', stats.min_FC, stats.min_eff;
+            'Maximum', stats.max_FC, stats.max_eff;
+            'Mean', stats.mean_FC, stats.mean_eff; 
+            'Std Dev', stats.std_FC, stats.std_eff;
+            'L1 Error (%)', stats.L1_fc, stats.L1_eff; 
+            'L2 Error (%)', stats.L2_fc, stats.L2_eff};
+    
+    % Create figure
+    figure;
+    axis off;
+    set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 400]);
+    
+    % Display Table
+    for i = 1:size(data,1)
+        for j = 1:size(data,2)
+            text(50 + (j-1) * 120, 370 - (i-1) * 30, num2str(data{i,j}), 'FontSize', 10, 'HorizontalAlignment', 'center');
+        end
+    end
+    
+    saveas(gcf, fullfile('charts', [name_prefix, '_statistics.png']));
+end
