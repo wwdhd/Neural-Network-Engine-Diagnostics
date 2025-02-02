@@ -9,11 +9,13 @@ currentFolder = fileparts(mfilename('fullpath'));
 
 disp("Reading Input File...")
 % Construct the full path to the Excel file
-inputdat = fullfile(currentFolder, 'Quantification-Test-LPT.xlsx');
+inputdat = fullfile(currentFolder, 'isotest_input.xlsx');
+isoinput = fullfile(currentFolder, 'isotest.xlsx');
 quainput_hpc = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
 
 % Read the data from the Excel file
 x1 = readmatrix(inputdat);
+xiso = readmatrix(isoinput);
 xqua = readmatrix(quainput_hpc);
 
 disp("Reading Input File Success!")
@@ -61,16 +63,20 @@ saveas(gcf, fullfile('charts', 'plotconfusion_detection_qua_test.png'));
 numbered_column = (1:size(y_det, 1))'; %Creating the case number for the ease of analysis
 combinedmat = [numbered_column, x1, round(y_det)];
 
-% Create a filtered matrix, for only the failed detection cases
-% Initialize an empty array to store rows where the first element is < 5
-combinedfiltered = [];
+combinedfiltered = combinedmat;
 
-%Filter the rows with loops
-for i = 1:size(combinedmat, 1)
-    if combinedmat(i, 15) > 0
-        combinedfiltered = [combinedfiltered; combinedmat(i, :)];  % Append the entire row to B if the first element is = 1
-    end
-end
+% % Create a filtered matrix, for only the failed detection cases
+% % Initialize an empty array to store rows where the first element is < 5
+% combinedfiltered = [];
+% 
+% %Filter the rows with loops
+% for i = 1:size(combinedmat, 1)
+%     if combinedmat(i, 15) > 0
+%         combinedfiltered = [combinedfiltered; combinedmat(i, :)];  % Append the entire row to B if the first element is = 1
+%     end
+% end
+
+
 
 
 %disp(combinedfiltered);
@@ -96,7 +102,7 @@ end
 %%%% CONFUSION MATRIX %%%%%%
 
 % Desired output matrix (target)
-desired_output = repmat([1 1 1 1], size(y_iso_mod, 1), 1);
+desired_output = xiso;
 
 % Convert rows to class labels
 [~, predicted_labels] = max(y_iso_mod, [], 2);  % Predicted labels from neural network output
