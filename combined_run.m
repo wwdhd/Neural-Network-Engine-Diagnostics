@@ -12,12 +12,18 @@ disp("Reading Input File...")
 % Construct the full path to the Excel file
 inputdat = fullfile(currentFolder, 'isotest_input.xlsx');
 isoinput = fullfile(currentFolder, 'isotest.xlsx');
-quainput_hpc = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
+quainput_lpc = fullfile(currentFolder, 'isotest_quares_lpc.xlsx');
+quainput_hpc = fullfile(currentFolder, 'isotest_quares_hpc.xlsx');
+quainput_hpt = fullfile(currentFolder, 'isotest_quares_hpt.xlsx');
+quainput_lpt = fullfile(currentFolder, 'isotest_quares_lpt.xlsx');
 
 % Read the data from the Excel file
 x1 = readmatrix(inputdat);
 xiso = readmatrix(isoinput);
+xqua_lpc = readmatrix(quainput_lpc);
 xqua_hpc = readmatrix(quainput_hpc);
+xqua_hpt = readmatrix(quainput_hpt);
+xqua_lpt = readmatrix(quainput_lpt);
 
 disp("Reading Input File Success!")
 
@@ -27,7 +33,7 @@ addpath(fullfile(currentFolder, 'Neural-Network-Function'));
 %% %%%%%%% DETECTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp("Conducting Detection...")
 % Call the neural network function
-y_det = Detection1440x5v1(x1);
+y_det = CLASS1_C(x1);
 y_det = round(y_det);
 
 %%%%%%%%%%%%%% CONFUSION MATRIX %%%%%%%%%%%%%%%%%%
@@ -87,7 +93,7 @@ x2 = combinedfiltered(:, 2:14); %x2 only filled with failed cases
 numbered_column2 = combinedfiltered(:, 1);
 
 % Call the neural network function to execute isolation
-y_iso = abs(round(Isolation1440x4v1(x2))); %absolute and round altogether
+y_iso = abs(round(CLASS2_A(x2))); %absolute and round altogether
 
 % Replace each row with a one-hot encoding of the maximum value
 [numRows, ~] = size(y_iso);
@@ -135,7 +141,216 @@ disp("• Low Pressure Compressor (LPC)")
 x3_lpc = iso_lpc(:, 2:14);
 numbered_column3_lpc = iso_lpc(:,1);
 
-y_qua_lpc = Quantification1LPC1440x1v1(x3_lpc);
+y_qua_lpc = APPROX1_C(x3_lpc);
+
+%% %%%%% COMPARISON AND FIGURE %%%%%%%%%%%%%
+FC_lpc = y_qua_lpc(:,1);
+eff_lpc = y_qua_lpc(:,2);
+
+
+% Plot 1: HPC_comparison_FlowDeg
+% Normalise the numbered column
+numbered_column_xqua_lpc = (1:size(xqua_lpc, 1))';
+numbered_column3_lpc_norm = numbered_column3_lpc - numbered_column3_lpc(1);
+
+figure;
+plot(numbered_column3_lpc_norm, (FC_lpc))
+hold on
+plot(numbered_column_xqua_lpc, (xqua_lpc(:,1)))
+% Subplot parameters
+%xlim([0 1200]);
+ylim([-7 1]);
+xlabel('Dataset')
+ylabel('Flow Capacity (%)')
+legend({'Target', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+hold off
+
+% Change the size of the plot to a 1:3 ratio landscape
+set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
+
+% Save the figure as a PNG file
+ saveas(gcf, fullfile('charts', 'LPC_comparison_FlowDeg.png'));
+
+% Plot 2: HPC_comparison_FlowDeg
+figure;
+plot(numbered_column3_lpc_norm, (eff_lpc))
+hold on
+plot(numbered_column_xqua_lpc, (xqua_lpc(:,2)))
+% Subplot parameters
+% xlim([0 1200]); 
+ylim([-7 1]);
+xlabel('Dataset')
+ylabel('Efficency (%)')
+legend({'Target', 'Actual'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+hold off
+
+% Set font to Times New Roman
+%set(gca, 'FontName', 'Times New Roman');
+
+% Change the size of the plot to a 1:3 ratio landscape
+set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
+
+% Save the figure as a PNG file
+saveas(gcf, fullfile('charts', 'LPC_comparison_FlowEff.png'));
+
+%%%%%% PERFORMANCE STATISTICS %%%%%
+
+% Calculate the range, mean, and standard deviation for array A (FC)
+range_FC_lpc = range(FC_lpc);
+mean_FC_lpc = mean(FC_lpc);
+std_FC_lpc = std(FC_lpc);
+
+% Range Mean StdDev for array B (Eff)
+range_eff_lpc = range(eff_lpc);
+mean_eff_lpc = mean(eff_lpc);
+std_eff_lpc = std(eff_lpc);
+
+% Error
+if size(FC_lpc, 1) > size(xqua_lpc,1)
+    FC_lpc = FC_lpc(1:size(xqua_lpc,1), :);
+    eff_lpc = eff_lpc(1:size(xqua_lpc,1), :);
+    
+    error_fc_lpc = FC_lpc - xqua_lpc(:,1);
+    error_eff_lpc = eff_lpc - xqua_lpc(:,2);
+
+elseif size(FC_lpc, 1) < size(xqua_lpc,1)
+    xqua_trunc_1_lpc = xqua_lpc(1:size(FC_lpc,1), 1);
+    xqua_trunc_2_lpc = xqua_lpc(1:size(eff_lpc,1), 2);
+    
+    error_fc_lpc = FC_lpc - xqua_trunc_1_lpc;
+    error_eff_lpc = eff_lpc - xqua_trunc_2_lpc;
+else
+    error_fc_lpc = FC_lpc - xqua_lpc(:,1);
+    error_eff_lpc = eff_lpc - xqua_lpc(:,1);
+end
+
+% L1 Norm (Sum of absolute differences)
+L1_fc_lpc = sum(abs(error_fc_lpc)) / sum(abs(FC_lpc)) * 100;
+L1_eff_lpc = sum(abs(error_eff_lpc)) / sum(abs(eff_lpc)) * 100;
+
+% L2 Norm (Square root of sum of squared differences)
+L2_fc_lpc = sqrt(sum(error_fc_lpc.^2)) / (sum(abs(xqua_lpc(:,1)))) * 100;
+L2_eff_lpc = sqrt(sum(error_eff_lpc.^2)) / (sum(abs(xqua_lpc(:,2)))) * 100;
+
+% Compute standard deviation percentage ranges
+% 1-sigma
+lower_bound_FC_1s_lpc = mean_FC_lpc - std_FC_lpc;
+upper_bound_FC_1s_lpc = mean_FC_lpc + std_FC_lpc;
+
+lower_bound_eff_1s_lpc = mean_eff_lpc - std_eff_lpc;
+upper_bound_eff_1s_lpc = mean_eff_lpc + std_eff_lpc;
+
+% 2-sigma
+lower_bound_FC_2s_lpc = mean_FC_lpc - 2*std_FC_lpc;
+upper_bound_FC_2s_lpc = mean_FC_lpc + 2*std_FC_lpc;
+
+lower_bound_eff_2s_lpc = mean_eff_lpc - 2*std_eff_lpc;
+upper_bound_eff_2s_lpc = mean_eff_lpc + 2*std_eff_lpc;
+
+% 3-sigma
+lower_bound_FC_3s_lpc = mean_FC_lpc - 3*std_FC_lpc;
+upper_bound_FC_3s_lpc = mean_FC_lpc + 3*std_FC_lpc;
+
+lower_bound_eff_3s_lpc = mean_eff_lpc - 3*std_eff_lpc;
+upper_bound_eff_3s_lpc = mean_eff_lpc + 3*std_eff_lpc;
+
+% Count elements within the range
+% 1-sigma
+count_in_range_FC_1s_lpc = sum(FC_lpc >= lower_bound_FC_1s_lpc & FC_lpc <= upper_bound_FC_1s_lpc);
+count_in_range_eff_1s_lpc = sum(eff_lpc >= lower_bound_eff_1s_lpc & eff_lpc <= upper_bound_eff_1s_lpc);
+
+% 2-sigma
+count_in_range_FC_2s_lpc = sum(FC_lpc >= lower_bound_FC_2s_lpc & FC_lpc <= upper_bound_FC_2s_lpc);
+count_in_range_eff_2s_lpc = sum(eff_lpc >= lower_bound_eff_2s_lpc & eff_lpc <= upper_bound_eff_2s_lpc);
+
+% 3-sigma
+count_in_range_FC_3s_lpc = sum(FC_lpc >= lower_bound_FC_3s_lpc & FC_lpc <= upper_bound_FC_3s_lpc);
+count_in_range_eff_3s_lpc = sum(eff_lpc >= lower_bound_eff_3s_lpc & eff_lpc <= upper_bound_eff_3s_lpc);
+
+% Total number of elements
+total_count_FC_lpc = length(FC_lpc);
+total_count_eff_lpc = length(eff_lpc);
+
+% Compute the proportion
+sigma1_FC_lpc = (count_in_range_FC_1s_lpc / total_count_FC_lpc)*100;
+sigma2_FC_lpc = (count_in_range_FC_2s_lpc / total_count_FC_lpc)*100;
+sigma3_FC_lpc = (count_in_range_FC_3s_lpc / total_count_FC_lpc)*100;
+
+sigma1_eff_lpc = (count_in_range_eff_1s_lpc / total_count_eff_lpc)*100;
+sigma2_eff_lpc = (count_in_range_eff_2s_lpc / total_count_eff_lpc)*100;
+sigma3_eff_lpc = (count_in_range_eff_3s_lpc / total_count_eff_lpc)*100;
+
+%min-max
+min_eff_lpc = min(eff_lpc);
+min_FC_lpc = min(FC_lpc);
+
+max_eff_lpc = max(eff_lpc);
+max_FC_lpc = max(FC_lpc);
+
+
+% Create the table data with sigma values
+data_lpc = {'Statistics', 'Flow Capacity', 'Efficiency'; 
+        'Range', range_FC_lpc, range_eff_lpc; 
+        'Minimum Value', min_FC_lpc, min_eff_lpc
+        'Maximum Value', max_FC_lpc, max_eff_lpc
+        'Mean', mean_FC_lpc, mean_eff_lpc; 
+        'Standard Deviation', std_FC_lpc, std_eff_lpc;
+        'Absolute Error (%)', L1_fc_lpc, L1_eff_lpc; 
+        'RMS Error (%)', L2_fc_lpc, L2_eff_lpc;
+        '1σ (%)', sigma1_FC_lpc, sigma1_eff_lpc; 
+        '2σ (%)', sigma2_FC_lpc, sigma2_eff_lpc; 
+        '3σ (%)', sigma3_FC_lpc, sigma3_eff_lpc};
+
+% Define table dimensions
+numRows = size(data_lpc, 1);
+numCols = size(data_lpc, 2);
+
+% Create a figure
+figure;
+hold on;
+
+% Set the figure size and remove axes
+set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 400]); % Increased height for new rows
+axis off;
+
+% Define table parameters
+cellWidth = 120; % Width of each cell
+cellHeight = 30; % Height of each cell
+startX = 50; % Starting X position
+startY = 370; % Adjusted for extra rows
+
+% Draw the table borders
+for row = 0:numRows
+    y = startY - row * cellHeight;
+    line([startX, startX + numCols * cellWidth], [y, y], 'Color', 'k', 'LineWidth', 1);
+end
+
+for col = 0:numCols
+    x = startX + col * cellWidth;
+    line([x, x], [startY, startY - numRows * cellHeight], 'Color', 'k', 'LineWidth', 1);
+end
+
+% Fill in the table data
+for row = 1:numRows
+    for col = 1:numCols
+        x = startX + (col - 0.5) * cellWidth;
+        y = startY - (row - 0.5) * cellHeight;
+        
+        % Convert numeric values to strings and format percentages
+        if isnumeric(data_lpc{row, col})
+            textStr = sprintf('%.2f', data_lpc{row, col}); 
+        else
+            textStr = data_lpc{row, col}; % Keep string values as they are
+        end
+        
+        text(x, y, textStr, 'FontSize', 10, 'HorizontalAlignment', 'center', ...
+            'VerticalAlignment', 'middle');
+    end
+end
+
+% Save the figure as a PNG file
+saveas(gcf, fullfile('charts', 'LPC_statistics.png'));
+hold off;
 
 combinedmat3_lpc = [numbered_column3_lpc, x3_lpc, y_qua_lpc];
 
@@ -145,22 +360,22 @@ disp("• High Pressure Compressor (HPC)")
 x3_hpc = iso_hpc(:, 2:14);
 numbered_column3_hpc = iso_hpc(:,1);
 
-y_qua_hpc = Quantification2HPC1440x1v1(x3_hpc);
+y_qua_hpc = APPROX2_C(x3_hpc);
 
-%%%%%%% COMPARISON AND FIGURE %%%%%%%%%%%%%
-FC_HPC_hpc = y_qua_hpc(:,1);
-eff_HPC_hpc = y_qua_hpc(:,2);
+%% %%%%% COMPARISON AND FIGURE %%%%%%%%%%%%%
+FC_hpt = y_qua_hpc(:,1);
+eff_hpt = y_qua_hpc(:,2);
 
 
 % Plot 1: HPC_comparison_FlowDeg
 % Normalise the numbered column
-numbered_column_xqua_hpc = (1:size(xqua_hpc, 1))';
-numbered_column3_hpc_norm = numbered_column3_hpc - numbered_column3_hpc(1);
+numbered_column_xqua_hpt = (1:size(xqua_hpc, 1))';
+numbered_column3_hpt_norm = numbered_column3_hpc - numbered_column3_hpc(1);
 
 figure;
-plot(numbered_column3_hpc_norm, (FC_HPC_hpc))
+plot(numbered_column3_hpt_norm, (FC_hpt))
 hold on
-plot(numbered_column_xqua_hpc, (xqua_hpc(:,1)))
+plot(numbered_column_xqua_hpt, (xqua_hpc(:,1)))
 % Subplot parameters
 %xlim([0 1200]);
 ylim([-7 1]);
@@ -177,9 +392,9 @@ set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
 
 % Plot 2: HPC_comparison_FlowDeg
 figure;
-plot(numbered_column3_hpc_norm, (eff_HPC_hpc))
+plot(numbered_column3_hpt_norm, (eff_hpt))
 hold on
-plot(numbered_column_xqua_hpc, (xqua_hpc(:,2)))
+plot(numbered_column_xqua_hpt, (xqua_hpc(:,2)))
 % Subplot parameters
 % xlim([0 1200]); 
 ylim([-7 1]);
@@ -197,104 +412,103 @@ set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
 % Save the figure as a PNG file
 saveas(gcf, fullfile('charts', 'HPC_comparison_FlowEff.png'));
 
-%%
 %%%%%% PERFORMANCE STATISTICS %%%%%
 
 % Calculate the range, mean, and standard deviation for array A (FC)
-range_FC_hpc = range(FC_HPC_hpc);
-mean_FC_hpc = mean(FC_HPC_hpc);
-std_FC_hpc = std(FC_HPC_hpc);
+range_FC_hpt = range(FC_hpt);
+mean_FC_hpt = mean(FC_hpt);
+std_FC_hpt = std(FC_hpt);
 
 % Range Mean StdDev for array B (Eff)
-range_eff_hpc = range(eff_HPC_hpc);
-mean_eff_hpc = mean(eff_HPC_hpc);
-std_eff_hpc = std(eff_HPC_hpc);
+range_eff_hpt = range(eff_hpt);
+mean_eff_hpt = mean(eff_hpt);
+std_eff_hpt = std(eff_hpt);
 
 % Error
-xqua_trunc_1_hpc = xqua_hpc(1:length(FC_HPC_hpc), 1);
-xqua_trunc_2_hpc = xqua_hpc(1:length(eff_HPC_hpc), 2);
+xqua_trunc_1_hpt = xqua_hpc(1:length(FC_hpt), 1);
+xqua_trunc_2_hpt = xqua_hpc(1:length(eff_hpt), 2);
 
-error_fc_hpc = FC_HPC_hpc - xqua_trunc_1_hpc;
-error_eff_hpc = eff_HPC_hpc - xqua_trunc_2_hpc;
+error_fc_hpt = FC_hpt - xqua_trunc_1_hpt;
+error_eff_hpt = eff_hpt - xqua_trunc_2_hpt;
 
 % L1 Norm (Sum of absolute differences)
-L1_fc_hpc = sum(abs(error_fc_hpc)) / sum(abs(xqua_trunc_1_hpc)) * 100;
-L1_eff_hpc = sum(abs(error_eff_hpc)) / sum(abs(xqua_trunc_2_hpc)) * 100;
+L1_fc_hpc = sum(abs(error_fc_hpt)) / sum(abs(xqua_trunc_1_hpt)) * 100;
+L1_eff_hpc = sum(abs(error_eff_hpt)) / sum(abs(xqua_trunc_2_hpt)) * 100;
 
 % L2 Norm (Square root of sum of squared differences)
-L2_fc_hpc = sqrt(sum(error_fc_hpc.^2)) / sqrt(sum(xqua_trunc_1_hpc.^2)) * 100;
-L2_eff_hpc = sqrt(sum(error_eff_hpc.^2)) / sqrt(sum(xqua_trunc_2_hpc.^2)) * 100;
+L2_fc_hpc = sqrt(sum(error_fc_hpt.^2)) / sqrt(sum(xqua_trunc_1_hpt.^2)) * 100;
+L2_eff_hpc = sqrt(sum(error_eff_hpt.^2)) / sqrt(sum(xqua_trunc_2_hpt.^2)) * 100;
 
 % Compute standard deviation percentage ranges
 % 1-sigma
-lower_bound_FC_1s_hpc = mean_FC_hpc - std_FC_hpc;
-upper_bound_FC_1s_hpc = mean_FC_hpc + std_FC_hpc;
+lower_bound_FC_1s_hpc = mean_FC_hpt - std_FC_hpt;
+upper_bound_FC_1s_hpc = mean_FC_hpt + std_FC_hpt;
 
-lower_bound_eff_1s_hpc = mean_eff_hpc - std_eff_hpc;
-upper_bound_eff_1s_hpc = mean_eff_hpc + std_eff_hpc;
+lower_bound_eff_1s_hpc = mean_eff_hpt - std_eff_hpt;
+upper_bound_eff_1s_hpc = mean_eff_hpt + std_eff_hpt;
 
 % 2-sigma
-lower_bound_FC_2s_hpc = mean_FC_hpc - 2*std_FC_hpc;
-upper_bound_FC_2s_hpc = mean_FC_hpc + 2*std_FC_hpc;
+lower_bound_FC_2s_hpc = mean_FC_hpt - 2*std_FC_hpt;
+upper_bound_FC_2s_lpc = mean_FC_hpt + 2*std_FC_hpt;
 
-lower_bound_eff_2s_hpc = mean_eff_hpc - 2*std_eff_hpc;
-upper_bound_eff_2s_hpc = mean_eff_hpc + 2*std_eff_hpc;
+lower_bound_eff_2s_lpc = mean_eff_hpt - 2*std_eff_hpt;
+upper_bound_eff_2s_lpc = mean_eff_hpt + 2*std_eff_hpt;
 
 % 3-sigma
-lower_bound_FC_3s_hpc = mean_FC_hpc - 3*std_FC_hpc;
-upper_bound_FC_3s_hpc = mean_FC_hpc + 3*std_FC_hpc;
+lower_bound_FC_3s_lpc = mean_FC_hpt - 3*std_FC_hpt;
+upper_bound_FC_3s_lpc = mean_FC_hpt + 3*std_FC_hpt;
 
-lower_bound_eff_3s_hpc = mean_eff_hpc - 3*std_eff_hpc;
-upper_bound_eff_3s_hpc = mean_eff_hpc + 3*std_eff_hpc;
+lower_bound_eff_3s_lpc = mean_eff_hpt - 3*std_eff_hpt;
+upper_bound_eff_3s_lpc = mean_eff_hpt + 3*std_eff_hpt;
 
 % Count elements within the range
 % 1-sigma
-count_in_range_FC_1s_hpc = sum(FC_HPC_hpc >= lower_bound_FC_1s_hpc & FC_HPC_hpc <= upper_bound_FC_1s_hpc);
-count_in_range_eff_1s_hpc = sum(eff_HPC_hpc >= lower_bound_eff_1s_hpc & eff_HPC_hpc <= upper_bound_eff_1s_hpc);
+count_in_range_FC_1s_lpc = sum(FC_hpt >= lower_bound_FC_1s_hpc & FC_hpt <= upper_bound_FC_1s_hpc);
+count_in_range_eff_1s_lpc = sum(eff_hpt >= lower_bound_eff_1s_hpc & eff_hpt <= upper_bound_eff_1s_hpc);
 
 % 2-sigma
-count_in_range_FC_2s_hpc = sum(FC_HPC_hpc >= lower_bound_FC_2s_hpc & FC_HPC_hpc <= upper_bound_FC_2s_hpc);
-count_in_range_eff_2s_hpc = sum(eff_HPC_hpc >= lower_bound_eff_2s_hpc & eff_HPC_hpc <= upper_bound_eff_2s_hpc);
+count_in_range_FC_2s_lpc = sum(FC_hpt >= lower_bound_FC_2s_hpc & FC_hpt <= upper_bound_FC_2s_lpc);
+count_in_range_eff_2s_lpc = sum(eff_hpt >= lower_bound_eff_2s_lpc & eff_hpt <= upper_bound_eff_2s_lpc);
 
 % 3-sigma
-count_in_range_FC_3s_hpc = sum(FC_HPC_hpc >= lower_bound_FC_3s_hpc & FC_HPC_hpc <= upper_bound_FC_3s_hpc);
-count_in_range_eff_3s_hpc = sum(eff_HPC_hpc >= lower_bound_eff_3s_hpc & eff_HPC_hpc <= upper_bound_eff_3s_hpc);
+count_in_range_FC_3s_lpc = sum(FC_hpt >= lower_bound_FC_3s_lpc & FC_hpt <= upper_bound_FC_3s_lpc);
+count_in_range_eff_3s_lpc = sum(eff_hpt >= lower_bound_eff_3s_lpc & eff_hpt <= upper_bound_eff_3s_lpc);
 
-sort(FC_HPC_hpc)
+sort(FC_hpt)
 
 % Total number of elements
-total_count_FC_hpc = length(FC_HPC_hpc);
-total_count_eff_hpc = length(eff_HPC_hpc);
+total_count_FC_lpc = length(FC_hpt);
+total_count_eff_lpc = length(eff_hpt);
 
 % Compute the proportion
-sigma1_FC_hpc = (count_in_range_FC_1s_hpc / total_count_FC_hpc)*100;
-sigma2_FC_hpc = (count_in_range_FC_2s_hpc / total_count_FC_hpc)*100;
-sigma3_FC_hpc = (count_in_range_FC_3s_hpc / total_count_FC_hpc)*100;
+sigma1_FC_lpc = (count_in_range_FC_1s_lpc / total_count_FC_lpc)*100;
+sigma2_FC_lpc = (count_in_range_FC_2s_lpc / total_count_FC_lpc)*100;
+sigma3_FC_lpc = (count_in_range_FC_3s_lpc / total_count_FC_lpc)*100;
 
-sigma1_eff_hpc = (count_in_range_eff_1s_hpc / total_count_eff_hpc)*100;
-sigma2_eff_hpc = (count_in_range_eff_2s_hpc / total_count_eff_hpc)*100;
-sigma3_eff_hpc = (count_in_range_eff_3s_hpc / total_count_eff_hpc)*100;
+sigma1_eff_lpc = (count_in_range_eff_1s_lpc / total_count_eff_lpc)*100;
+sigma2_eff_lpc = (count_in_range_eff_2s_lpc / total_count_eff_lpc)*100;
+sigma3_eff_lpc = (count_in_range_eff_3s_lpc / total_count_eff_lpc)*100;
 
 %min-max
-min_eff_hpc = min(eff_HPC_hpc);
-min_FC_hpc = min(FC_HPC_hpc);
+min_eff_lpc = min(eff_hpt);
+min_FC_lpc = min(FC_hpt);
 
-max_eff_hpc = max(eff_HPC_hpc);
-max_FC_hpc = max(FC_HPC_hpc);
+max_eff_lpc = max(eff_hpt);
+max_FC_lpc = max(FC_hpt);
 
 
 % Create the table data with sigma values
 data_hpc = {'Statistics', 'Flow Capacity', 'Efficiency'; 
-        'Range', range_FC_hpc, range_eff_hpc; 
-        'Minimum Value', min_FC_hpc, min_eff_hpc
-        'Maximum Value', max_FC_hpc, max_eff_hpc
-        'Mean', mean_FC_hpc, mean_eff_hpc; 
-        'Standard Deviation', std_FC_hpc, std_eff_hpc;
+        'Range', range_FC_hpt, range_eff_hpt; 
+        'Minimum Value', min_FC_lpc, min_eff_lpc
+        'Maximum Value', max_FC_lpc, max_eff_lpc
+        'Mean', mean_FC_hpt, mean_eff_hpt; 
+        'Standard Deviation', std_FC_hpt, std_eff_hpt;
         'Absolute Error (%)', L1_fc_hpc, L1_eff_hpc; 
         'RMS Error (%)', L2_fc_hpc, L2_eff_hpc;
-        '1σ (%)', sigma1_FC_hpc, sigma1_eff_hpc; 
-        '2σ (%)', sigma2_FC_hpc, sigma2_eff_hpc; 
-        '3σ (%)', sigma3_FC_hpc, sigma3_eff_hpc};
+        '1σ (%)', sigma1_FC_lpc, sigma1_eff_lpc; 
+        '2σ (%)', sigma2_FC_lpc, sigma2_eff_lpc; 
+        '3σ (%)', sigma3_FC_lpc, sigma3_eff_lpc};
 
 % Define table dimensions
 numRows = size(data_hpc, 1);
@@ -358,10 +572,218 @@ x3_hpt = iso_hpt(:, 2:14);
 numbered_column3_hpt = iso_hpt(:,1);
 
 %Neural Network Commences
-y_qua_hpt = Quantification3HPT1440x1v1(x3_hpt);
+y_qua_hpt = APPROX3_C(x3_hpt);
 
-% disp("Quantification Result (HPC)")
-% disp(y_qua_hpt)
+%% %%%%% COMPARISON AND FIGURE %%%%%%%%%%%%%
+FC_hpt = y_qua_hpt(:,1);
+eff_hpt = y_qua_hpt(:,2);
+
+
+% Plot 1: HPC_comparison_FlowDeg
+% Normalise the numbered column
+numbered_column_xqua_hpt = (1:size(xqua_hpt, 1))';
+numbered_column3_hpt_norm = numbered_column3_hpt - numbered_column3_hpt(1);
+
+figure;
+plot(numbered_column3_hpt_norm, (FC_hpt))
+hold on
+plot(numbered_column_xqua_hpt, (xqua_lpc(:,1)))
+% Subplot parameters
+%xlim([0 1200]);
+ylim([-7 1]);
+xlabel('Dataset')
+ylabel('Flow Capacity (%)')
+legend({'Output', 'Target'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+hold off
+
+% Change the size of the plot to a 1:3 ratio landscape
+set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
+
+% Save the figure as a PNG file
+ saveas(gcf, fullfile('charts', 'HPT_comparison_FlowDeg.png'));
+
+% Plot 2: HPC_comparison_FlowDeg
+figure;
+plot(numbered_column3_hpt_norm, (eff_hpt))
+hold on
+plot(numbered_column_xqua_hpt, (xqua_lpc(:,2)))
+% Subplot parameters
+% xlim([0 1200]); 
+ylim([-7 1]);
+xlabel('Dataset')
+ylabel('Efficency (%)')
+legend({'Output', 'Target'}, 'Location', 'south', 'Box', 'off', 'Orientation', 'horizontal');
+hold off
+
+% Set font to Times New Roman
+%set(gca, 'FontName', 'Times New Roman');
+
+% Change the size of the plot to a 1:3 ratio landscape
+set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
+
+% Save the figure as a PNG file
+saveas(gcf, fullfile('charts', 'HPT_comparison_FlowEff.png'));
+
+%%%%%% PERFORMANCE STATISTICS %%%%%
+
+% Calculate the range, mean, and standard deviation for array A (FC)
+range_FC_hpt = range(FC_hpt);
+mean_FC_hpt = mean(FC_hpt);
+std_FC_hpt = std(FC_hpt);
+
+% Range Mean StdDev for array B (Eff)
+range_eff_hpt = range(eff_hpt);
+mean_eff_hpt = mean(eff_hpt);
+std_eff_hpt = std(eff_hpt);
+
+% Error
+if size(FC_hpt, 1) > size(xqua_hpt,1)
+    FC_hpt = FC_hpt(1:size(xqua_hpt,1), :);
+    eff_hpt = eff_hpt(1:size(xqua_hpt,1), :);
+    
+    error_fc_hpt = FC_hpt - xqua_hpt(:,1);
+    error_eff_hpt = eff_hpt - xqua_hpt(:,1);
+
+elseif size(FC_hpt, 1) < size(xqua_hpt,1)
+    xqua_trunc_1_hpt = xqua_lpc(1:size(FC_hpt,1), 1);
+    xqua_trunc_2_hpt = xqua_lpc(1:size(eff_hpt,1), 2);
+    
+    error_fc_hpt = FC_hpt - xqua_trunc_1_hpt;
+    error_eff_hpt = eff_hpt - xqua_trunc_2_hpt;
+else
+    error_fc_hpt = FC_hpt - xqua_lpc;
+    error_eff_hpt = eff_hpt - xqua_lpc;
+end
+
+% L1 Norm (Sum of absolute differences)
+L1_fc_hpc = sum(abs(error_fc_hpt)) / sum(abs(FC_hpt)) * 100;
+L1_eff_hpc = sum(abs(error_eff_hpt)) / sum(abs(eff_hpt)) * 100;
+
+% L2 Norm (Square root of sum of squared differences)
+L2_fc_hpc = sqrt(sum(error_fc_hpt.^2)) / sqrt(sum(abs(FC_hpt))) * 100;
+L2_eff_hpc = sqrt(sum(error_eff_hpt.^2)) / sqrt(sum(abs(eff_hpt))) * 100;
+
+% Compute standard deviation percentage ranges
+% 1-sigma
+lower_bound_FC_1s_hpc = mean_FC_hpt - std_FC_hpt;
+upper_bound_FC_1s_hpc = mean_FC_hpt + std_FC_hpt;
+
+lower_bound_eff_1s_hpc = mean_eff_hpt - std_eff_hpt;
+upper_bound_eff_1s_hpc = mean_eff_hpt + std_eff_hpt;
+
+% 2-sigma
+lower_bound_FC_2s_hpc = mean_FC_hpt - 2*std_FC_hpt;
+upper_bound_FC_2s_lpc = mean_FC_hpt + 2*std_FC_hpt;
+
+lower_bound_eff_2s_lpc = mean_eff_hpt - 2*std_eff_hpt;
+upper_bound_eff_2s_lpc = mean_eff_hpt + 2*std_eff_hpt;
+
+% 3-sigma
+lower_bound_FC_3s_lpc = mean_FC_hpt - 3*std_FC_hpt;
+upper_bound_FC_3s_lpc = mean_FC_hpt + 3*std_FC_hpt;
+
+lower_bound_eff_3s_lpc = mean_eff_hpt - 3*std_eff_hpt;
+upper_bound_eff_3s_lpc = mean_eff_hpt + 3*std_eff_hpt;
+
+% Count elements within the range
+% 1-sigma
+count_in_range_FC_1s_lpc = sum(FC_hpt >= lower_bound_FC_1s_hpc & FC_hpt <= upper_bound_FC_1s_hpc);
+count_in_range_eff_1s_lpc = sum(eff_hpt >= lower_bound_eff_1s_hpc & eff_hpt <= upper_bound_eff_1s_hpc);
+
+% 2-sigma
+count_in_range_FC_2s_lpc = sum(FC_hpt >= lower_bound_FC_2s_hpc & FC_hpt <= upper_bound_FC_2s_lpc);
+count_in_range_eff_2s_lpc = sum(eff_hpt >= lower_bound_eff_2s_lpc & eff_hpt <= upper_bound_eff_2s_lpc);
+
+% 3-sigma
+count_in_range_FC_3s_lpc = sum(FC_hpt >= lower_bound_FC_3s_lpc & FC_hpt <= upper_bound_FC_3s_lpc);
+count_in_range_eff_3s_lpc = sum(eff_hpt >= lower_bound_eff_3s_lpc & eff_hpt <= upper_bound_eff_3s_lpc);
+
+sort(FC_hpt)
+
+% Total number of elements
+total_count_FC_lpc = length(FC_hpt);
+total_count_eff_lpc = length(eff_hpt);
+
+% Compute the proportion
+sigma1_FC_lpc = (count_in_range_FC_1s_lpc / total_count_FC_lpc)*100;
+sigma2_FC_lpc = (count_in_range_FC_2s_lpc / total_count_FC_lpc)*100;
+sigma3_FC_lpc = (count_in_range_FC_3s_lpc / total_count_FC_lpc)*100;
+
+sigma1_eff_lpc = (count_in_range_eff_1s_lpc / total_count_eff_lpc)*100;
+sigma2_eff_lpc = (count_in_range_eff_2s_lpc / total_count_eff_lpc)*100;
+sigma3_eff_lpc = (count_in_range_eff_3s_lpc / total_count_eff_lpc)*100;
+
+%min-max
+min_eff_lpc = min(eff_hpt);
+min_FC_lpc = min(FC_hpt);
+
+max_eff_lpc = max(eff_hpt);
+max_FC_lpc = max(FC_hpt);
+
+
+% Create the table data with sigma values
+data_hpc = {'Statistics', 'Flow Capacity', 'Efficiency'; 
+        'Range', range_FC_hpt, range_eff_hpt; 
+        'Minimum Value', min_FC_lpc, min_eff_lpc
+        'Maximum Value', max_FC_lpc, max_eff_lpc
+        'Mean', mean_FC_hpt, mean_eff_hpt; 
+        'Standard Deviation', std_FC_hpt, std_eff_hpt;
+        'Absolute Error (%)', L1_fc_hpc, L1_eff_hpc; 
+        'RMS Error (%)', L2_fc_hpc, L2_eff_hpc;
+        '1σ (%)', sigma1_FC_lpc, sigma1_eff_lpc; 
+        '2σ (%)', sigma2_FC_lpc, sigma2_eff_lpc; 
+        '3σ (%)', sigma3_FC_lpc, sigma3_eff_lpc};
+
+% Define table dimensions
+numRows = size(data_hpc, 1);
+numCols = size(data_hpc, 2);
+
+% Create a figure
+figure;
+hold on;
+
+% Set the figure size and remove axes
+set(gcf, 'Units', 'pixels', 'Position', [100, 100, 600, 400]); % Increased height for new rows
+axis off;
+
+% Define table parameters
+cellWidth = 120; % Width of each cell
+cellHeight = 30; % Height of each cell
+startX = 50; % Starting X position
+startY = 370; % Adjusted for extra rows
+
+% Draw the table borders
+for row = 0:numRows
+    y = startY - row * cellHeight;
+    line([startX, startX + numCols * cellWidth], [y, y], 'Color', 'k', 'LineWidth', 1);
+end
+
+for col = 0:numCols
+    x = startX + col * cellWidth;
+    line([x, x], [startY, startY - numRows * cellHeight], 'Color', 'k', 'LineWidth', 1);
+end
+
+% Fill in the table data
+for row = 1:numRows
+    for col = 1:numCols
+        x = startX + (col - 0.5) * cellWidth;
+        y = startY - (row - 0.5) * cellHeight;
+        
+        % Convert numeric values to strings and format percentages
+        if isnumeric(data_hpc{row, col})
+            textStr = sprintf('%.2f', data_hpc{row, col}); 
+        else
+            textStr = data_hpc{row, col}; % Keep string values as they are
+        end
+        
+        text(x, y, textStr, 'FontSize', 10, 'HorizontalAlignment', 'center', ...
+            'VerticalAlignment', 'middle');
+    end
+end
+
+% Save the figure as a PNG file
+saveas(gcf, fullfile('charts', 'LPC_statistics.png'));
+hold off;
 
 combinedmat3_hpt = [numbered_column3_hpt, x3_hpt, y_qua_hpt];
 
@@ -373,7 +795,7 @@ x3_lpt = iso_lpt(:, 2:14);
 numbered_column3_lpt = iso_lpt(:,1);
 
 %Neural Network Commences
-y_qua_lpt = Quantification4LPT1440x1v1(x3_lpt);
+y_qua_lpt = APPROX4_C(x3_lpt);
 
 combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 
