@@ -338,6 +338,30 @@ function stats = compute_statistics(FC, eff, xqua)
     stats.max_FC = max(FC);
     stats.min_eff = min(eff);
     stats.max_eff = max(eff);
+
+    % Sigma bounds
+    lower_bound_FC_1s = stats.mean_FC - stats.std_FC;
+    upper_bound_FC_1s = stats.mean_FC + stats.std_FC;
+    lower_bound_FC_2s = stats.mean_FC - 2 * stats.std_FC;
+    upper_bound_FC_2s = stats.mean_FC + 2 * stats.std_FC;
+    lower_bound_FC_3s = stats.mean_FC - 3 * stats.std_FC;
+    upper_bound_FC_3s = stats.mean_FC + 3 * stats.std_FC;
+
+    lower_bound_eff_1s = stats.mean_eff - stats.std_eff;
+    upper_bound_eff_1s = stats.mean_eff + stats.std_eff;
+    lower_bound_eff_2s = stats.mean_eff - 2 * stats.std_eff;
+    upper_bound_eff_2s = stats.mean_eff + 2 * stats.std_eff;
+    lower_bound_eff_3s = stats.mean_eff - 3 * stats.std_eff;
+    upper_bound_eff_3s = stats.mean_eff + 3 * stats.std_eff;
+
+    % Count elements within 1, 2, and 3 sigma
+    stats.sigma1_FC = sum(FC >= lower_bound_FC_1s & FC <= upper_bound_FC_1s) / length(FC) * 100;
+    stats.sigma2_FC = sum(FC >= lower_bound_FC_2s & FC <= upper_bound_FC_2s) / length(FC) * 100;
+    stats.sigma3_FC = sum(FC >= lower_bound_FC_3s & FC <= upper_bound_FC_3s) / length(FC) * 100;
+
+    stats.sigma1_eff = sum(eff >= lower_bound_eff_1s & eff <= upper_bound_eff_1s) / length(eff) * 100;
+    stats.sigma2_eff = sum(eff >= lower_bound_eff_2s & eff <= upper_bound_eff_2s) / length(eff) * 100;
+    stats.sigma3_eff = sum(eff >= lower_bound_eff_3s & eff <= upper_bound_eff_3s) / length(eff) * 100;
 end
 
 function save_statistics_table(stats, name_prefix)
@@ -348,7 +372,10 @@ function save_statistics_table(stats, name_prefix)
             'Mean', stats.mean_FC, stats.mean_eff; 
             'Std Dev', stats.std_FC, stats.std_eff;
             'L1 Error (%)', stats.L1_fc, stats.L1_eff; 
-            'L2 Error (%)', stats.L2_fc, stats.L2_eff};
+            'L2 Error (%)', stats.L2_fc, stats.L2_eff
+            '1σ (%)', stats.sigma1_FC, stats.sigma1_eff; 
+            '2σ (%)', stats.sigma2_FC, stats.sigma2_eff; 
+            '3σ (%)', stats.sigma3_FC, stats.sigma3_eff};
     
     % Create figure
     % Define table dimensions
