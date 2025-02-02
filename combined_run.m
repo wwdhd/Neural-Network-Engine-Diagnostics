@@ -1,3 +1,4 @@
+%%%%%%%%%%%%%% | NEURAL NETWORK FOR ENGINE DIAGNOSTICS | %%%%%%%%%%%%%
 clear all
 close all
 clc
@@ -16,14 +17,14 @@ quainput_hpc = fullfile(currentFolder, 'Quantification-Test-HPC_quares.xlsx');
 % Read the data from the Excel file
 x1 = readmatrix(inputdat);
 xiso = readmatrix(isoinput);
-xqua = readmatrix(quainput_hpc);
+xqua_hpc = readmatrix(quainput_hpc);
 
 disp("Reading Input File Success!")
 
 % Add the function folder path
 addpath(fullfile(currentFolder, 'Neural-Network-Function'));
 
-%% DETECTION
+%% %%%%%%% DETECTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp("Conducting Detection...")
 % Call the neural network function
 y_det = Detection1440x5v1(x1);
@@ -77,11 +78,9 @@ combinedfiltered = combinedmat;
 % end
 
 
-
-
 %disp(combinedfiltered);
 
-%% ISOLATION
+%% %%%%%%% ISOLATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp("Conducting Isolation...")
 % Take the result of the detection out
 x2 = combinedfiltered(:, 2:14); %x2 only filled with failed cases
@@ -101,12 +100,9 @@ end
 
 %%%% CONFUSION MATRIX %%%%%%
 
-% Desired output matrix (target)
-desired_output = xiso;
-
 % Convert rows to class labels
 [~, predicted_labels] = max(y_iso_mod, [], 2);  % Predicted labels from neural network output
-[~, true_labels] = max(desired_output, [], 2); % True labels from desired output
+[~, true_labels] = max(xiso, [], 2); % True labels from desired output
 
 % Convert labels to one-hot encoded matrices for plotconfusion
 numClasses = 4; % Number of classes
@@ -131,7 +127,7 @@ iso_hpc = combinedmat2(y_iso_mod(:, 2) == 1, :); % Rows where the HPC column of 
 iso_hpt = combinedmat2(y_iso_mod(:, 3) == 1, :); % Rows where the HPT column of y_iso is 1
 iso_lpt = combinedmat2(y_iso_mod(:, 4) == 1, :); % Rows where the LPT column of y_iso is 1
 
-%% Quantification, LPC
+%% %%%%%%% Quantification, LPC %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp("Conducting Quantification on:")
 disp("• Low Pressure Compressor (LPC)")
 
@@ -143,7 +139,7 @@ y_qua_lpc = Quantification1LPC1440x1v1(x3_lpc);
 
 combinedmat3_lpc = [numbered_column3_lpc, x3_lpc, y_qua_lpc];
 
-%% Quantification, HPC
+%% %%%%%%% Quantification, HPC %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp("• High Pressure Compressor (HPC)")
 % Take the result of the isolation out
 x3_hpc = iso_hpc(:, 2:14);
@@ -155,13 +151,18 @@ y_qua_hpc = Quantification2HPC1440x1v1(x3_hpc);
 FC_HPC_hpc = y_qua_hpc(:,1);
 eff_HPC_hpc = y_qua_hpc(:,2);
 
+
 % Plot 1: HPC_comparison_FlowDeg
+% Normalise the numbered column
+numbered_column_xqua_hpc = (1:size(xqua_hpc, 1))';
+numbered_column3_hpc_norm = numbered_column3_hpc - numbered_column3_hpc(1);
+
 figure;
-plot(numbered_column3_hpc, (FC_HPC_hpc))
+plot(numbered_column3_hpc_norm, (FC_HPC_hpc))
 hold on
-plot(numbered_column, (xqua(:,1)))
+plot(numbered_column_xqua_hpc, (xqua_hpc(:,1)))
 % Subplot parameters
-xlim([0 1200]);
+%xlim([0 1200]);
 ylim([-7 1]);
 xlabel('Dataset')
 ylabel('Flow Capacity (%)')
@@ -176,9 +177,9 @@ set(gcf, 'Position', [100, 100, 1000, 400]); % [left, bottom, width, height]
 
 % Plot 2: HPC_comparison_FlowDeg
 figure;
-plot(numbered_column3_hpc, (eff_HPC_hpc))
+plot(numbered_column3_hpc_norm, (eff_HPC_hpc))
 hold on
-plot(numbered_column, (xqua(:,2)))
+plot(numbered_column_xqua_hpc, (xqua_hpc(:,2)))
 % Subplot parameters
 % xlim([0 1200]); 
 ylim([-7 1]);
@@ -210,8 +211,8 @@ mean_eff_hpc = mean(eff_HPC_hpc);
 std_eff_hpc = std(eff_HPC_hpc);
 
 % Error
-xqua_trunc_1_hpc = xqua(1:length(FC_HPC_hpc), 1);
-xqua_trunc_2_hpc = xqua(1:length(eff_HPC_hpc), 2);
+xqua_trunc_1_hpc = xqua_hpc(1:length(FC_HPC_hpc), 1);
+xqua_trunc_2_hpc = xqua_hpc(1:length(eff_HPC_hpc), 2);
 
 error_fc_hpc = FC_HPC_hpc - xqua_trunc_1_hpc;
 error_eff_hpc = eff_HPC_hpc - xqua_trunc_2_hpc;
@@ -286,7 +287,7 @@ max_FC_hpc = max(FC_HPC_hpc);
 data_hpc = {'Statistics', 'Flow Capacity', 'Efficiency'; 
         'Range', range_FC_hpc, range_eff_hpc; 
         'Minimum Value', min_FC_hpc, min_eff_hpc
-        'Maximum Value', max_FC, max_eff_hpc
+        'Maximum Value', max_FC_hpc, max_eff_hpc
         'Mean', mean_FC_hpc, mean_eff_hpc; 
         'Standard Deviation', std_FC_hpc, std_eff_hpc;
         'Absolute Error (%)', L1_fc_hpc, L1_eff_hpc; 
@@ -348,7 +349,7 @@ hold off;
 
 combinedmat3_hpc = [numbered_column3_hpc, x3_hpc, y_qua_hpc];
 
-%% Quantification, HPT
+%% %%%%%%% Quantification, HPT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 disp("• High Pressure Turbine (HPT)")
 
 
@@ -356,25 +357,27 @@ disp("• High Pressure Turbine (HPT)")
 x3_hpt = iso_hpt(:, 2:14);
 numbered_column3_hpt = iso_hpt(:,1);
 
-y_qua_hpt =Quantification3HPT1440x1v1(x3_hpt);
+%Neural Network Commences
+y_qua_hpt = Quantification3HPT1440x1v1(x3_hpt);
 
 % disp("Quantification Result (HPC)")
 % disp(y_qua_hpt)
 
 combinedmat3_hpt = [numbered_column3_hpt, x3_hpt, y_qua_hpt];
 
-%% Quantification, LPT
+%% %%%%%%% Quantification, LPT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp("• Low Pressure Turbine (LPT)")
 
 % Take the result of the isolation out
 x3_lpt = iso_lpt(:, 2:14);
 numbered_column3_lpt = iso_lpt(:,1);
 
+%Neural Network Commences
 y_qua_lpt = Quantification4LPT1440x1v1(x3_lpt);
 
 combinedmat3_lpt = [numbered_column3_lpt, x3_lpt, y_qua_lpt];
 
-%% Excel Output
+%% %%%%%%% Excel Output %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 disp("Writing result to Excel...")
 
